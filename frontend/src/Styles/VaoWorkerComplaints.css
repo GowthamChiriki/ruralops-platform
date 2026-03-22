@@ -1,0 +1,582 @@
+/* ================================================================
+   VaoWorkerComplaints.css — GOT Command Hall Premium
+   Bubble pills · Crest stat cards · Engraved table
+   Mirrors VaoComplaintsByStatus + VaoComplaints design language
+================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;800;900&family=Crimson+Pro:ital,opsz,wght@0,6..37,300;0,6..37,400;0,6..37,600;0,6..37,700;1,6..37,400&family=DM+Mono:wght@400;500&display=swap');
+
+/* ─── TOKENS ─── */
+:root {
+  --bg      : #020507;
+  --s1      : #060d14;
+  --s2      : #0a1620;
+  --s3      : #0e1e2c;
+
+  --gold    : #b8922e;
+  --gold-l  : #d4aa5a;
+  --gold-ll : #f0d882;
+  --gold-d  : #7a5e18;
+
+  --teal    : #2e8ea8;
+  --teal-p  : rgba(35,110,128,.09);
+  --teal-b  : rgba(35,110,128,.26);
+
+  --em      : #378a55;
+  --em-p    : rgba(55,138,85,.10);
+  --em-b    : rgba(55,138,85,.28);
+
+  --amb     : #c07818;
+  --amb-p   : rgba(192,120,24,.10);
+  --amb-b   : rgba(192,120,24,.28);
+
+  --rose    : #9e3328;
+  --ro-p    : rgba(158,51,40,.10);
+
+  --steel   : #4e6878;
+  --vi      : #7050b8;
+  --vi-p    : rgba(112,80,184,.10);
+  --vi-b    : rgba(112,80,184,.28);
+
+  --b0 : rgba(184,146,46,.07);
+  --b1 : rgba(184,146,46,.14);
+  --b2 : rgba(184,146,46,.26);
+  --b3 : rgba(184,146,46,.44);
+
+  --t1 : #ddd5be;
+  --t2 : #9e9070;
+  --t3 : #6a6045;
+  --t4 : #484030;
+
+  --pill : 9999px;
+  --r3   : 14px;
+  --r4   : 20px;
+
+  --ease   : cubic-bezier(.4,0,.2,1);
+  --bounce : cubic-bezier(.34,1.4,.64,1);
+  --fast   : 155ms;
+  --mid    : 265ms;
+  --slow   : 420ms;
+
+  --fh : 'Cinzel', Georgia, serif;
+  --fd : 'Cinzel Decorative', Georgia, serif;
+  --fb : 'Crimson Pro', Georgia, serif;
+  --fm : 'DM Mono', monospace;
+
+  --sh   : 0 4px 24px rgba(0,0,0,.65), 0 1px 4px rgba(0,0,0,.45);
+  --sh-l : 0 10px 44px rgba(0,0,0,.75), 0 2px 8px rgba(0,0,0,.55);
+  --top  : inset 0 1px 0 rgba(255,255,255,.03);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── KEYFRAMES ─── */
+@keyframes fadeUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+@keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+@keyframes rowIn   { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:none} }
+@keyframes spin    { to{transform:rotate(360deg)} }
+@keyframes blink   { 0%,100%{opacity:1} 55%{opacity:.14} }
+@keyframes numPop  { 0%{transform:scale(.7);opacity:0} 62%{transform:scale(1.09)} 100%{transform:scale(1);opacity:1} }
+@keyframes shimmer { 0%{background-position:0% center} 50%{background-position:100% center} 100%{background-position:0% center} }
+@keyframes accentV { from{transform:scaleY(0)} to{transform:scaleY(1)} }
+@keyframes pulse   { 0%,100%{box-shadow:0 0 0 0 rgba(192,120,24,.36)} 55%{box-shadow:0 0 0 6px transparent} }
+@keyframes orbDrift{
+  0%,100%{transform:translate(0,0) scale(1)}
+  38%{transform:translate(22px,-16px) scale(1.04)}
+  68%{transform:translate(-14px,20px) scale(.97)}
+}
+
+/* ================================================================
+   PAGE SHELL
+================================================================ */
+.vaw-page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--t1);
+  font-family: var(--fb);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Animated ambient orbs */
+.vaw-page::before {
+  content: '';
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+  width: 780px; height: 780px; top: -260px; left: -220px;
+  background: radial-gradient(circle, rgba(184,146,46,.048) 0%, transparent 62%);
+  animation: orbDrift 20s ease-in-out infinite;
+}
+.vaw-page::after {
+  content: '';
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+  width: 560px; height: 560px; bottom: -140px; right: -140px;
+  background: radial-gradient(circle, rgba(55,138,85,.032) 0%, transparent 62%);
+  animation: orbDrift 26s ease-in-out 6s infinite reverse;
+}
+
+/* Dot grid texture */
+.vaw-page .vaw-bg-grid,
+.vaw-page + .vaw-bg-grid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(184,146,46,.022) 1px, transparent 1px);
+  background-size: 36px 36px; opacity: .50;
+}
+
+/* ================================================================
+   INNER WRAPPER
+================================================================ */
+.vaw-inner {
+  position: relative; z-index: 2;
+  max-width: 1280px; margin: 0 auto;
+  padding: 0 40px 100px;
+}
+
+/* ================================================================
+   HEADER — 3-column: back | center | refresh
+================================================================ */
+.vaw-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 40px 0 32px;
+  animation: fadeUp var(--slow) var(--ease) both;
+}
+
+.vaw-header__center { min-width: 0; }
+
+/* Eyebrow label */
+.vaw-eyebrow {
+  font-family: var(--fh); font-size: 8.5px; font-weight: 700;
+  letter-spacing: .22em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 9px;
+  display: flex; align-items: center; gap: 9px;
+}
+.vaw-eyebrow::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold); box-shadow: 0 0 9px rgba(184,146,46,.68);
+  animation: blink 2.8s ease-in-out infinite; flex-shrink: 0;
+}
+
+/* Page title */
+.vaw-title {
+  font-family: var(--fd);
+  font-size: clamp(22px, 3vw, 38px);
+  font-weight: 900; letter-spacing: .045em; line-height: 1.06;
+  background: linear-gradient(
+    155deg,
+    var(--gold-ll) 0%, #eecf6a 10%,
+    var(--gold-l)  26%, var(--gold) 46%,
+    #8a6018 62%, var(--gold-d) 76%,
+    #c09030 88%, #eccf70 100%
+  );
+  background-size: 220% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,.95))
+          drop-shadow(0 0 30px rgba(184,146,46,.20));
+  animation: shimmer 10s ease-in-out infinite;
+}
+
+.vaw-sub {
+  font-family: var(--fb); font-size: 14px; color: var(--t3);
+  margin-top: 7px; line-height: 1.62; letter-spacing: .01em;
+}
+.vaw-sub code {
+  font-family: var(--fm); font-size: 11px; color: var(--gold-l);
+  background: rgba(184,146,46,.09); border: 1px solid rgba(184,146,46,.22);
+  border-radius: 6px; padding: 2px 8px; letter-spacing: .05em;
+}
+
+/* ================================================================
+   BUBBLE BUTTONS — back & refresh
+================================================================ */
+.vaw-back,
+.vaw-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 22px;
+  border-radius: var(--pill);
+  font-family: var(--fh); font-size: 10px; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase;
+  border: 1.5px solid var(--b2);
+  background: linear-gradient(148deg, var(--s3) 0%, var(--s2) 50%, var(--s1) 100%);
+  color: var(--t2);
+  box-shadow: var(--sh), var(--top);
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--fast) var(--ease);
+  will-change: transform;
+  position: relative; overflow: hidden;
+}
+.vaw-back::before,
+.vaw-btn::before {
+  content: '';
+  position: absolute; top: 0; left: -54%;
+  width: 36%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.07), transparent);
+  transform: skewX(-18deg);
+  transition: left var(--mid) var(--ease);
+  pointer-events: none;
+}
+.vaw-back:hover::before,
+.vaw-btn:hover::before { left: 136%; }
+.vaw-back:hover,
+.vaw-btn:hover {
+  border-color: var(--b3); color: var(--t1);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--sh-l), 0 0 14px rgba(184,146,46,.12);
+}
+.vaw-back:active, .vaw-btn:active { transform: scale(.985); }
+
+.vaw-btn--refresh {
+  background: linear-gradient(135deg, #cca840 0%, #a47820 55%, #7a5814 100%);
+  border-color: rgba(240,208,100,.28);
+  color: #04020a !important;
+  box-shadow: 0 3px 18px rgba(184,146,46,.34), var(--top);
+}
+.vaw-btn--refresh:hover {
+  box-shadow: 0 6px 32px rgba(184,146,46,.52);
+  color: #04020a !important;
+}
+
+/* ================================================================
+   STAT CARDS
+================================================================ */
+.vaw-stats {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 26px;
+  animation: fadeUp var(--slow) var(--ease) .07s both;
+}
+@media (max-width:1100px) { .vaw-stats { grid-template-columns: 1fr 1fr; } }
+@media (max-width:560px)  { .vaw-stats { grid-template-columns: 1fr 1fr; gap: 10px; } }
+
+.vaw-stat {
+  position: relative; overflow: hidden;
+  background: linear-gradient(148deg, var(--s3) 0%, var(--s2) 50%, var(--s1) 100%);
+  border: 1px solid var(--b1);
+  border-radius: var(--r4);
+  padding: 22px 22px 18px;
+  box-shadow: var(--sh), var(--top);
+  transition: border-color var(--mid), transform var(--mid), box-shadow var(--mid);
+  will-change: transform; cursor: default;
+}
+/* Left accent bar keyed off --sc (stat color) */
+.vaw-stat::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--sc, var(--gold));
+  border-radius: var(--r4) 0 0 var(--r4);
+  transform-origin: top;
+  animation: accentV .55s var(--ease) both;
+}
+/* Top shimmer */
+.vaw-stat::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(184,146,46,.10) 18%,
+    rgba(212,170,90,.55) 50%, rgba(184,146,46,.10) 82%, transparent 100%
+  );
+}
+.vaw-stat:hover {
+  border-color: color-mix(in srgb, var(--sc, var(--gold)) 46%, transparent);
+  transform: translateY(-5px);
+  box-shadow: var(--sh-l);
+}
+/* First stat is featured/larger */
+.vaw-stat:first-child .vaw-stat__val { font-size: 50px; }
+
+/* Corner ambient */
+.vaw-stat::after {
+  content: ''; /* override shimmer for corner glow */
+}
+/* Use a wrapper instead for the top shimmer + corner */
+.vaw-stat__corner {
+  position: absolute; top: 0; right: 0;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle at 100% 0%, rgba(184,146,46,.055) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.vaw-stat__icon {
+  font-size: 20px; margin-bottom: 10px;
+  width: 44px; height: 44px; border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(184,146,46,.08); border: 1px solid var(--b1);
+  box-shadow: var(--top);
+  transition: transform var(--mid), box-shadow var(--mid);
+}
+.vaw-stat:hover .vaw-stat__icon {
+  transform: scale(1.12) rotate(-6deg);
+  box-shadow: 0 0 20px rgba(184,146,46,.20);
+}
+.vaw-stat__val {
+  font-family: var(--fh); font-size: 40px; font-weight: 900;
+  line-height: 1; color: var(--t1); letter-spacing: -.01em;
+  animation: numPop .55s var(--bounce) both;
+}
+.vaw-stat__lbl {
+  font-family: var(--fh); font-size: 8.5px; font-weight: 700;
+  color: var(--t3); text-transform: uppercase; letter-spacing: .13em;
+  margin-top: 6px;
+}
+
+/* ================================================================
+   ERROR BAR
+================================================================ */
+.vaw-error {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--ro-p); border: 1px solid rgba(158,51,40,.26);
+  border-radius: var(--r3); padding: 13px 18px; margin-bottom: 18px;
+  font-family: var(--fb); font-size: 13px; color: #d09090;
+  animation: fadeIn .3s ease both; position: relative; z-index: 2;
+}
+.vaw-error button {
+  margin-left: auto;
+  background: rgba(158,51,40,.10); border: 1px solid rgba(158,51,40,.26);
+  border-radius: var(--pill); padding: 5px 14px;
+  color: #c07070; font-family: var(--fh); font-size: 9px; font-weight: 700;
+  letter-spacing: .07em; cursor: pointer;
+  transition: background var(--fast);
+}
+.vaw-error button:hover { background: rgba(158,51,40,.22); }
+
+/* ================================================================
+   EMPTY STATE
+================================================================ */
+.vaw-empty {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 70px 20px; gap: 10px; text-align: center;
+  background: linear-gradient(158deg, var(--s3) 0%, var(--s2) 50%, var(--s1) 100%);
+  border: 1px solid var(--b1); border-radius: var(--r4);
+  box-shadow: var(--sh), var(--top);
+  animation: fadeUp .45s var(--ease) both;
+}
+.vaw-empty__icon { font-size: 46px; opacity: .26; margin-bottom: 6px; }
+.vaw-empty__title {
+  font-family: var(--fh); font-size: 12px; font-weight: 700;
+  color: var(--t3); letter-spacing: .11em; text-transform: uppercase;
+}
+.vaw-empty__sub {
+  font-family: var(--fb); font-size: 14px; color: var(--t4);
+  max-width: 300px; line-height: 1.65;
+}
+
+/* ================================================================
+   TABLE PANEL
+================================================================ */
+.vaw-panel {
+  background: linear-gradient(158deg, var(--s3) 0%, var(--s2) 50%, var(--s1) 100%);
+  border: 1px solid var(--b1);
+  border-radius: var(--r4); overflow: hidden;
+  box-shadow: var(--sh-l), var(--top);
+  position: relative;
+  animation: fadeUp var(--slow) var(--ease) .14s both;
+}
+/* Gold shimmer top edge */
+.vaw-panel::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px; z-index: 1;
+  background: linear-gradient(
+    90deg, transparent 0%, rgba(184,146,46,.14) 14%,
+    rgba(212,170,90,.60) 50%, rgba(184,146,46,.14) 86%, transparent 100%
+  );
+}
+/* Ambient corner glow */
+.vaw-panel::after {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle at 100% 0%, rgba(184,146,46,.055) 0%, transparent 66%);
+  pointer-events: none;
+}
+
+.vaw-panel__hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  padding: 16px 26px 14px;
+  border-bottom: 1px solid var(--b0);
+  background: linear-gradient(135deg, rgba(184,146,46,.065) 0%, transparent 70%);
+  position: relative;
+}
+/* Left accent pip */
+.vaw-panel__hdr::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, transparent, rgba(184,146,46,.45), transparent);
+  border-radius: var(--r4) 0 0 0;
+  animation: accentV .55s var(--ease) both; transform-origin: top;
+}
+
+.vaw-panel__title {
+  font-family: var(--fh); font-size: 11px; font-weight: 800;
+  color: var(--t1); letter-spacing: .13em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 10px;
+}
+.vaw-panel__title::before {
+  content: '';
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--gold); box-shadow: 0 0 9px rgba(184,146,46,.70); flex-shrink: 0;
+}
+
+.vaw-panel__count {
+  font-family: var(--fm); font-size: 10px; font-weight: 700; color: var(--t3);
+  background: rgba(184,146,46,.07); border: 1px solid var(--b1);
+  border-radius: var(--pill); padding: 3px 14px;
+}
+
+/* ================================================================
+   TABLE — engraved stone
+================================================================ */
+.vaw-table-wrap { overflow-x: auto; }
+.vaw-table { width: 100%; border-collapse: collapse; }
+
+.vaw-table thead tr { border-bottom: 1px solid var(--b1); }
+.vaw-table th {
+  padding: 11px 18px; text-align: left;
+  font-family: var(--fh); font-size: 8px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .14em;
+  color: var(--t4); white-space: nowrap;
+  background: rgba(0,0,0,.20);
+}
+.vaw-table th:first-child { padding-left: 28px; }
+.vaw-table th:last-child  { padding-right: 28px; text-align: center; }
+
+.vaw-trow {
+  border-bottom: 1px solid rgba(184,146,46,.045);
+  transition: background var(--mid);
+  animation: rowIn .32s var(--ease) both;
+}
+.vaw-trow:last-child { border-bottom: none; }
+.vaw-trow:hover {
+  background: linear-gradient(
+    90deg, rgba(184,146,46,.045) 0%, rgba(184,146,46,.018) 55%, transparent 100%
+  );
+}
+.vaw-trow td { padding: 13px 18px; vertical-align: middle; }
+.vaw-trow td:first-child { padding-left: 28px; }
+.vaw-trow td:last-child  { padding-right: 28px; text-align: center; }
+
+/* ── ID chip ── */
+.vaw-id code {
+  font-family: var(--fm); font-size: 10px; letter-spacing: .055em;
+  color: var(--gold-l);
+  background: rgba(184,146,46,.09);
+  border: 1px solid rgba(184,146,46,.24);
+  border-radius: 8px; padding: 4px 10px;
+  display: inline-block; white-space: nowrap;
+}
+
+/* ── Area ── */
+.vaw-area {
+  font-family: var(--fh); font-size: 11px; font-weight: 600;
+  color: var(--t1); letter-spacing: .02em;
+}
+
+/* ── Category ── */
+.vaw-cat {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--fh); font-size: 10px; font-weight: 600;
+  color: var(--t2); letter-spacing: .05em; text-transform: uppercase;
+}
+
+/* ── Date ── */
+.vaw-date {
+  font-family: var(--fm); font-size: 11px; color: var(--t4); letter-spacing: .04em;
+}
+
+/* ── Status badge (pill) ── */
+/* StatusBadge renders with inline style from JSX, this handles base layout */
+.vaw-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-family: var(--fh) !important;
+  font-size: 8.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: .07em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+/* ── View button — bubble ── */
+.vaw-view {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 18px; border-radius: var(--pill);
+  background: rgba(184,146,46,.07); border: 1px solid rgba(184,146,46,.26);
+  color: var(--gold-l);
+  font-family: var(--fh); font-size: 9px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--fast) var(--ease);
+  position: relative; overflow: hidden;
+}
+.vaw-view::before {
+  content: '';
+  position: absolute; top: 0; left: -52%;
+  width: 36%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.09), transparent);
+  transform: skewX(-18deg);
+  transition: left var(--mid) var(--ease);
+}
+.vaw-view:hover::before { left: 135%; }
+.vaw-view:hover {
+  background: rgba(184,146,46,.18); border-color: rgba(184,146,46,.50);
+  color: var(--gold-ll); transform: scale(1.06);
+  box-shadow: 0 0 20px rgba(184,146,46,.26);
+}
+
+/* ================================================================
+   TABLE FOOTER
+================================================================ */
+.vaw-tbl-foot {
+  padding: 11px 28px;
+  font-family: var(--fh); font-size: 9px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--t4);
+  border-top: 1px solid var(--b0); background: rgba(0,0,0,.13);
+}
+
+/* ================================================================
+   LOADING
+================================================================ */
+.vaw-loading {
+  min-height: 100vh; background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 18px; position: relative; z-index: 2;
+}
+.vaw-spinner {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 2.5px solid rgba(184,146,46,.12);
+  border-top-color: var(--gold);
+  animation: spin .85s linear infinite;
+}
+.vaw-loading p {
+  font-family: var(--fh); font-size: 9px; font-weight: 700;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--t4);
+}
+
+/* ================================================================
+   RESPONSIVE
+================================================================ */
+@media (max-width:1200px) { .vaw-inner { padding: 0 28px 80px; } }
+@media (max-width:900px) {
+  .vaw-header { grid-template-columns: auto 1fr; grid-template-rows: auto auto; }
+  .vaw-header > :last-child { grid-column: 1 / -1; justify-self: start; }
+  .vaw-inner { padding: 0 18px 60px; }
+}
+@media (max-width:640px) {
+  .vaw-header { grid-template-columns: 1fr; }
+  .vaw-inner { padding: 0 14px 52px; }
+  .vaw-title { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

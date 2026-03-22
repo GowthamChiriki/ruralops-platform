@@ -1,0 +1,47 @@
+.worker-ratings{
+  background: rgba(255,255,255,0.05);
+  border-radius:16px;
+  padding:24px;
+}
+
+.worker-ratings h2{
+  margin-bottom:18px;
+}
+
+.ratings-placeholder{
+  text-align:center;
+  padding:30px 20px;
+}
+
+.ratings-icon{
+  font-size:40px;
+  margin-bottom:12px;
+}
+
+.ratings-placeholder h3{
+  margin-bottom:10px;
+  font-weight:600;
+}
+
+.ratings-placeholder p{
+  font-size:14px;
+  opacity:0.75;
+}
+
+.ratings-placeholder ul{
+  margin:14px auto;
+  max-width:320px;
+  text-align:left;
+  font-size:14px;
+  opacity:0.8;
+}
+
+.ratings-placeholder li{
+  margin-bottom:6px;
+}
+
+.ratings-note{
+  font-size:12px;
+  opacity:0.6;
+  margin-top:12px;
+}

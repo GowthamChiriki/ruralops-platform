@@ -1,0 +1,42 @@
+.worker-overview{
+  background: rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.worker-header{
+  margin-bottom: 20px;
+}
+
+.worker-header h2{
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.worker-header p{
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+.worker-stats{
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+  gap: 14px;
+}
+
+.worker-card{
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+}
+
+.worker-card h3{
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.worker-card p{
+  font-size: 13px;
+  opacity: 0.7;
+}
