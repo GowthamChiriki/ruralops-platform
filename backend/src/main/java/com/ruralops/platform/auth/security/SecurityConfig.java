@@ -85,6 +85,12 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
 
                         /* =====================================================
+                           SUPER ADMIN — full access to everything
+                           ===================================================== */
+
+                        .requestMatchers("/**").hasRole("SUPER_ADMIN")
+
+                        /* =====================================================
                            VAO ACTIONS
                            ===================================================== */
 

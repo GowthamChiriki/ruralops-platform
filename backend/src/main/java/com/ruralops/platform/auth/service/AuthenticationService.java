@@ -152,17 +152,18 @@ public class AuthenticationService {
     }
 
     /* =====================================================
-       ROLE PRIORITY
+       ROLE PRIORITY — SUPER_ADMIN added at top (5)
        ===================================================== */
 
     private int rolePriority(String role) {
 
         return switch (role) {
 
-            case "MAO" -> 4;
-            case "VAO" -> 3;
-            case "WORKER" -> 2;
-            case "CITIZEN" -> 1;
+            case "SUPER_ADMIN" -> 5;   // ← NEW: highest priority
+            case "MAO"         -> 4;
+            case "VAO"         -> 3;
+            case "WORKER"      -> 2;
+            case "CITIZEN"     -> 1;
 
             default -> 0;
         };

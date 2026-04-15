@@ -5,6 +5,7 @@ import com.ruralops.platform.common.enums.AccountStatus;
 import com.ruralops.platform.governance.domain.Village;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -81,6 +82,7 @@ public class CitizenAccount {
 
     @Column(name = "phone_number", nullable = false, length = 15)
     private String phoneNumber;
+
 
     @Column(name = "email", nullable = false, length = 150)
     private String email;
