@@ -66,7 +66,7 @@ public class District {
     /**
      * Default constructor required by JPA.
      */
-    protected District() {
+    public District() {
         // For JPA
     }
 
@@ -104,5 +104,25 @@ public class District {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }

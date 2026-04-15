@@ -66,7 +66,7 @@ public class Village {
     /**
      * Default constructor required by JPA.
      */
-    protected Village() {
+    public Village() {
         // For JPA
     }
 
@@ -102,5 +102,25 @@ public class Village {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setMandal(Mandal mandal) {
+        this.mandal = mandal;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }

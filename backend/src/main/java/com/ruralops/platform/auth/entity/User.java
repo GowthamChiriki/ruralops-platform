@@ -52,7 +52,7 @@ public class User {
        JPA CONSTRUCTOR
        ===================================================== */
 
-    protected User() {
+    public User() {
         // JPA only
     }
 
@@ -104,7 +104,7 @@ public class User {
     }
 
     public void setPhone(String phone) {
-        this.phone = this.phone;
+        this.phone = phone;
     }
 
     public void setStatus(AccountStatus status) {
@@ -117,5 +117,13 @@ public class User {
 
     public boolean isActive() {
         return this.status == AccountStatus.ACTIVE;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }

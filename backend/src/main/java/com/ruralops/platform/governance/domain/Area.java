@@ -106,4 +106,24 @@ public class Area {
     public Instant getCreatedAt() {
         return createdAt;
     }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setVillage(Village village) {
+        this.village = village;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
 }

@@ -84,37 +84,35 @@ public class SecurityConfig {
                         /* uploads */
                         .requestMatchers("/uploads/**").permitAll()
 
-                        /* =====================================================
-                           SUPER ADMIN — full access to everything
-                           ===================================================== */
+                        /* ================= SUPER ADMIN (FULL ACCESS) ================= */
+                        .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
 
-                        .requestMatchers("/**").hasRole("SUPER_ADMIN")
 
                         /* =====================================================
                            VAO ACTIONS
                            ===================================================== */
 
-                        .requestMatchers("/workers/provision").hasRole("VAO")
-                        .requestMatchers("/workers/village").hasRole("VAO")
-                        .requestMatchers("/vao/**").hasRole("VAO")
+                        .requestMatchers("/workers/provision").hasAnyRole("VAO", "SUPER_ADMIN")
+                        .requestMatchers("/workers/village").hasAnyRole("VAO", "SUPER_ADMIN")
+                        .requestMatchers("/vao/**").hasAnyRole("VAO", "SUPER_ADMIN")
 
                         /* =====================================================
                            WORKER ACTIONS
                            ===================================================== */
 
-                        .requestMatchers("/workers/complaints/**").hasRole("WORKER")
+                        .requestMatchers("/workers/complaints/**").hasAnyRole("WORKER", "SUPER_ADMIN")
 
                         /* =====================================================
                            CITIZEN ACTIONS
                            ===================================================== */
 
-                        .requestMatchers("/citizen/**").hasRole("CITIZEN")
+                        .requestMatchers("/citizen/**").hasAnyRole("CITIZEN", "SUPER_ADMIN")
 
                         /* =====================================================
                            MAO ADMIN
                            ===================================================== */
 
-                        .requestMatchers("/administration/**").hasRole("MAO")
+                        .requestMatchers("/administration/**").hasAnyRole("MAO", "SUPER_ADMIN")
 
                         .anyRequest().authenticated()
                 )

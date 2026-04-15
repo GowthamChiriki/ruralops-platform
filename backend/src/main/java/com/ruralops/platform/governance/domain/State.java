@@ -66,7 +66,7 @@ public class State {
      * Default constructor required by JPA.
      * Not meant to be used directly.
      */
-    protected State() { }
+    public State() { }
 
     /**
      * Creates a new State.
@@ -117,5 +117,25 @@ public class State {
      */
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }

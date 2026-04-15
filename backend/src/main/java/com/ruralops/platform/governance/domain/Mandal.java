@@ -66,7 +66,7 @@ public class Mandal {
     /**
      * Default constructor required by JPA.
      */
-    protected Mandal() {
+    public Mandal() {
         // For JPA
     }
 
@@ -102,5 +102,25 @@ public class Mandal {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setConstituency(Constituency constituency) {
+        this.constituency = constituency;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }
