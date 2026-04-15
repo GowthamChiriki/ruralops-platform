@@ -46,11 +46,6 @@ public class RoleDataInitializer implements ApplicationRunner {
         //  VAO (village scoped)
         assignRole("7777777777", "VAO", "PNP-2254");
 
-        //  CITIZEN
-        assignRole("6666666666", "CITIZEN", "PNP-2254");
-
-        //  WORKER
-        assignRole("5555555555", "WORKER", "PNP-2254");
     }
 
     /* =====================================================

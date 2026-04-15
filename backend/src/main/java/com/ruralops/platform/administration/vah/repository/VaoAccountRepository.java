@@ -78,4 +78,6 @@ public interface VaoAccountRepository extends JpaRepository<VaoAccount, UUID> {
     boolean existsByEmail(String email);
 
     boolean existsByPhoneNumber(String phoneNumber);
+
+    boolean existsByUser_Id(UUID userId);
 }
