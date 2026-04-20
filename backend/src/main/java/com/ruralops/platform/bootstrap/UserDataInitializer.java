@@ -3,6 +3,7 @@ package com.ruralops.platform.bootstrap;
 import com.ruralops.platform.auth.entity.User;
 import com.ruralops.platform.auth.repository.UserRepository;
 import com.ruralops.platform.common.enums.AccountStatus;
+
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Component;
 @Order(2)
 public class UserDataInitializer implements ApplicationRunner {
 
+    private static final String DEFAULT_PASSWORD = "Rural@123";
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -22,42 +25,33 @@ public class UserDataInitializer implements ApplicationRunner {
         this.passwordEncoder = passwordEncoder;
     }
 
-    /* =====================================================
-       RUN AFTER GOVERNANCE INITIALIZER
-       ===================================================== */
-
     @Override
     public void run(ApplicationArguments args) {
         seedUsers();
     }
 
-    /* =====================================================
-       USER SEEDING
-       ===================================================== */
-
     private void seedUsers() {
 
-        createUser("9999999999"); // SUPER_ADMIN
-        createUser("8888888888"); // MAO
-        createUser("7777777777"); // VAO
-
+        createUser("9999999999"); // VAO
+        createUser("8888888888"); // CITIZEN
     }
-
-    /* =====================================================
-       CREATE USER (IDEMPOTENT)
-       ===================================================== */
 
     private void createUser(String phone) {
 
-        // prevent duplicate insertion
-        if (userRepository.existsByPhone(phone)) return;
+        String normalized = normalize(phone);
+
+        if (userRepository.existsByPhone(normalized)) return;
 
         User user = new User(
-                phone,
-                passwordEncoder.encode("Rural@123"),
+                normalized,
+                passwordEncoder.encode(DEFAULT_PASSWORD),
                 AccountStatus.ACTIVE
         );
 
         userRepository.save(user);
+    }
+
+    private String normalize(String value) {
+        return value == null ? null : value.trim();
     }
 }
