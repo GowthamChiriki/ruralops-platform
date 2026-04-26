@@ -56,10 +56,6 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
                     String subject = claims.getSubject();
                     String role = claims.get("role", String.class);
-
-                    if (role != null && role.startsWith("ROLE_")) {
-                        role = role.substring(5);
-                    }
                     String villageId = claims.get("villageId", String.class);
 
                     if (subject == null || role == null || role.isBlank()) {
