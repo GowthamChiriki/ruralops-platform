@@ -59,17 +59,7 @@ const PROBLEMS = [
   },
 ];
 
-const EASE  = "cubic-bezier(0.22,1,0.36,1)";
-const EASEP = "cubic-bezier(0.34,1.56,0.64,1)";
-
-const CR = {
-  bright: "#c84030",
-  mid:    "#9e3328",
-  dark:   "#7a2020",
-  bg:     "rgba(158,51,40,.10)",
-  border: "rgba(158,51,40,.26)",
-};
-
+/* ── Card ── */
 function ProblemCard({ problem, index }) {
   const [hov, setHov] = useState(false);
 
@@ -78,173 +68,132 @@ function ProblemCard({ problem, index }) {
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        background: "linear-gradient(145deg,#0c1519 0%,#091014 100%)",
-        border: `1px solid ${hov ? CR.border : "rgba(255,255,255,.07)"}`,
-        borderRadius: "12px",
-        padding: "24px",
+        background: "var(--bg-card)",
+        border: `1px solid ${hov ? "var(--danger-brd)" : "var(--border)"}`,
+        borderRadius: "var(--r-lg)",
+        padding: "28px",
         position: "relative", overflow: "hidden", cursor: "default",
-        /* transform + border-color only — no box-shadow in transition */
         transform: hov ? "translateY(-5px)" : "translateY(0)",
-        boxShadow: "0 2px 8px rgba(0,0,0,.65),0 10px 28px rgba(0,0,0,.55)",
-        transition: `transform .28s ${EASE},border-color .22s ease`,
-        animation: `pbIn .38s ${EASE} ${index * 0.06}s both`,
+        boxShadow: hov
+          ? "var(--shadow-md), 0 0 0 3px var(--danger-sub), 0 0 32px rgba(184,92,58,0.10)"
+          : "var(--shadow-xs)",
+        transition:
+          "transform 0.26s cubic-bezier(0.22,1,0.36,1), box-shadow 0.26s ease, border-color 0.22s ease",
       }}
     >
-      {/* top accent — transform only */}
+      {/* top accent */}
       <div style={{
-        position:"absolute", top:0, left:0, right:0, height:"2px",
-        background:`linear-gradient(90deg,${CR.dark},${CR.bright},transparent)`,
-        transform: hov ? "scaleX(1)" : "scaleX(0)",
-        transformOrigin:"left",
-        transition:`transform .36s ${EASE}`,
+        position: "absolute", top: 0, left: 0, right: 0, height: "2px",
+        background: "linear-gradient(90deg, var(--danger), transparent)",
+        opacity: hov ? 0.85 : 0, transition: "opacity 0.3s ease",
       }}/>
 
-      {/* corner glow — opacity + transform only */}
+      {/* icon + index */}
       <div style={{
-        position:"absolute", bottom:"-60px", right:"-60px",
-        width:"160px", height:"160px", borderRadius:"50%",
-        background:`radial-gradient(circle,${CR.bg} 0%,transparent 70%)`,
-        opacity: hov ? 1 : 0,
-        transform: hov ? "scale(1)" : "scale(.6)",
-        transition:`opacity .36s ease,transform .36s ${EASE}`,
-        pointerEvents:"none",
-      }}/>
-
-      {/* pill + icon row */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"18px"}}>
+        display: "flex", alignItems: "flex-start",
+        justifyContent: "space-between", marginBottom: "20px",
+      }}>
         <div style={{
-          display:"inline-flex", alignItems:"center", gap:"6px",
-          fontFamily:"'Cinzel',Georgia,serif",
-          fontSize:"9px", fontWeight:700, letterSpacing:".14em", textTransform:"uppercase",
-          color:CR.bright, background:CR.bg, border:`1px solid ${CR.border}`,
-          padding:"4px 11px", borderRadius:"999px",
-        }}>
-          {/* dot — opacity blink, no box-shadow animation */}
-          <span style={{
-            width:"5px", height:"5px", borderRadius:"50%",
-            background:CR.mid, flexShrink:0,
-          }}/>
-          Problem {index + 1}
-        </div>
-
-        {/* icon — transform only, no box-shadow on hover */}
-        <div style={{
-          width:"42px", height:"42px", borderRadius:"10px",
-          display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px",
-          background:`linear-gradient(135deg,rgba(158,51,40,.10),rgba(158,51,40,.04))`,
-          border:`1px solid ${hov ? CR.border : "rgba(158,51,40,.16)"}`,
-          transform: hov ? "scale(1.12) rotate(-5deg)" : "scale(1) rotate(0deg)",
-          transition:`transform .28s ${EASEP},border-color .22s ease`,
+          width: "44px", height: "44px", borderRadius: "var(--r-md)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "20px",
+          background: hov ? "var(--danger-sub)" : "var(--bg-subtle)",
+          border: `1px solid ${hov ? "var(--danger-brd)" : "var(--border)"}`,
+          transform: hov ? "scale(1.10) rotate(-4deg)" : "scale(1) rotate(0deg)",
+          transition:
+            "transform 0.26s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease, border-color 0.2s ease",
         }}>
           {problem.icon}
         </div>
+
+        <span style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em",
+          color: "var(--danger)",
+          background: "var(--danger-sub)",
+          border: "1px solid var(--danger-brd)",
+          padding: "3px 9px", borderRadius: "100px",
+          opacity: hov ? 1 : 0.6,
+          transition: "opacity 0.2s ease",
+        }}>
+          #{String(index + 1).padStart(2, "0")}
+        </span>
       </div>
 
-      {/* severity bar — static, no hover transition needed */}
-      <div style={{display:"flex",alignItems:"center",gap:"3px",marginBottom:"16px"}}>
-        {Array.from({length:8}).map((_,i) => (
-          <div key={i} style={{
-            height:"3px", flex:1, borderRadius:"999px",
-            background: i <= index
-              ? `linear-gradient(90deg,${CR.dark},${CR.bright})`
-              : "rgba(255,255,255,.06)",
-            opacity: i <= index ? (0.25 + (i / 8) * 0.75) : 1,
-          }}/>
-        ))}
-      </div>
-
-      {/* title — color only */}
       <h3 style={{
-        fontFamily:"'Cinzel',Georgia,serif",
-        fontSize:"13px", fontWeight:700, letterSpacing:".07em",
-        color: hov ? CR.bright : "#dde9dd",
-        margin:"0 0 10px", transition:"color .18s ease",
+        fontFamily: "var(--font-head)",
+        fontSize: "15px", fontWeight: 700, letterSpacing: "-0.02em",
+        color: "var(--text-1)", marginBottom: "10px",
       }}>
         {problem.title}
       </h3>
 
-      {/* description */}
       <p style={{
-        fontFamily:"'Crimson Pro',Georgia,serif",
-        fontSize:"14.5px", color:"#5d785d", lineHeight:1.74, margin:"0 0 14px",
+        fontSize: "13.5px", color: "var(--text-2)", lineHeight: 1.68,
+        fontWeight: 300, marginBottom: "16px",
       }}>
         {problem.description}
       </p>
 
-      {/* italic quote — color + border-color only */}
       <p style={{
-        fontFamily:"'IM Fell English',Georgia,serif",
-        fontSize:"13px", fontStyle:"italic",
-        color: hov ? CR.mid : "#394e39",
-        lineHeight:1.6, margin:0,
-        paddingLeft:"10px",
-        borderLeft:`2px solid ${hov ? CR.border : "rgba(255,255,255,.06)"}`,
-        transition:"color .18s ease,border-color .18s ease",
+        fontFamily: "var(--font-body)",
+        fontSize: "12.5px", fontStyle: "italic",
+        color: hov ? "var(--text-2)" : "var(--text-3)",
+        lineHeight: 1.6,
+        paddingLeft: "12px",
+        borderLeft: `2px solid ${hov ? "var(--danger)" : "var(--border)"}`,
+        transition: "color 0.2s ease, border-color 0.22s ease",
       }}>
         {problem.quote}
       </p>
-
-      {/* bottom bar — scaleX NOT width (no layout reflow) */}
-      <div style={{
-        marginTop:"18px", height:"3px", borderRadius:"999px",
-        background:`linear-gradient(90deg,${CR.dark},${CR.bright})`,
-        transformOrigin:"left",
-        transform: hov ? "scaleX(1)" : "scaleX(0.06)",
-        opacity: hov ? 1 : 0.35,
-        transition:`transform .38s ${EASE},opacity .28s ease`,
-      }}/>
     </div>
   );
 }
 
+/* ── Section ── */
 export default function ProblemSection() {
   return (
-    <div style={{ position:"relative" }}>
+    <div style={{ position: "relative", width: "100%" }}>
 
-      <style>{`
-        @keyframes pbIn   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
-        @keyframes pbRed  { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-        @keyframes pbDot  { 0%,100%{opacity:.9} 55%{opacity:.2} }
-      `}</style>
-
-      {/* ── header ── */}
-      <div style={{ marginBottom:"56px" }}>
-
+      {/* header */}
+      <div style={{ marginBottom: "56px" }}>
         <div style={{
-          display:"inline-flex", alignItems:"center", gap:"9px",
-          fontFamily:"'Cinzel',Georgia,serif",
-          fontSize:"10px", fontWeight:600, letterSpacing:".22em", textTransform:"uppercase",
-          color:CR.bright, background:CR.bg, border:`1px solid ${CR.border}`,
-          padding:"7px 16px", borderRadius:"2px", marginBottom:"20px",
+          display: "inline-flex", alignItems: "center", gap: "8px",
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px", fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase",
+          color: "var(--danger)",
+          background: "var(--danger-sub)",
+          border: "1px solid var(--danger-brd)",
+          padding: "5px 13px", borderRadius: "100px",
+          marginBottom: "22px",
         }}>
           <span style={{
-            width:"6px", height:"6px", borderRadius:"50%",
-            background:CR.mid, flexShrink:0,
-            animation:"pbDot 2s ease-in-out infinite",
+            width: "6px", height: "6px", borderRadius: "50%",
+            background: "var(--danger)",
+            animation: "breathe 2s ease infinite",
+            flexShrink: 0,
           }}/>
           The Problem
         </div>
 
         <h2 style={{
-          fontFamily:"'Cinzel',Georgia,serif",
-          fontSize:"clamp(24px,2.8vw,40px)", fontWeight:800, letterSpacing:".04em",
-          lineHeight:1.17, color:"#dde9dd", marginBottom:"16px", marginTop:0, maxWidth:"720px",
+          fontFamily: "var(--font-head)",
+          fontSize: "clamp(28px,3.2vw,44px)", fontWeight: 800, letterSpacing: "-0.04em",
+          lineHeight: 1.05, color: "var(--text-1)", marginBottom: "16px", marginTop: 0,
+          maxWidth: "680px",
         }}>
           Rural programs are complex.{" "}
           <span style={{
-            fontStyle:"italic",
-            background:"linear-gradient(270deg,#9e3328,#c84030,#ef4444,#9e3328,#7a2020,#c84030,#9e3328)",
-            backgroundSize:"400% 400%",
-            WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text",
-            animation:"pbRed 5s ease infinite",
+            background: "linear-gradient(135deg, var(--danger), #e07840)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
           }}>
             Coordination failures make them fragile.
           </span>
         </h2>
 
         <p style={{
-          fontFamily:"'Crimson Pro',Georgia,serif",
-          fontSize:"17px", color:"#5d785d", lineHeight:1.84, maxWidth:"640px", margin:"0 0 28px",
+          fontSize: "15.5px", color: "var(--text-2)", lineHeight: 1.75,
+          maxWidth: "600px", fontWeight: 300, marginBottom: "24px",
         }}>
           Across rural governance and development initiatives, challenges rarely arise
           from lack of intent or effort. They arise when information is delayed,
@@ -252,27 +201,30 @@ export default function ProblemSection() {
         </p>
 
         <div style={{
-          display:"inline-flex", alignItems:"center", gap:"8px",
-          padding:"10px 18px",
-          background:"rgba(158,51,40,.08)", border:"1px solid rgba(158,51,40,.20)",
-          borderRadius:"8px",
-          fontFamily:"'Cinzel',Georgia,serif",
-          fontSize:"10.5px", fontWeight:600, letterSpacing:".08em", color:CR.bright,
+          display: "inline-flex", alignItems: "center", gap: "9px",
+          padding: "10px 16px",
+          background: "var(--danger-sub)",
+          border: "1px solid var(--danger-brd)",
+          borderRadius: "var(--r-md)",
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px", fontWeight: 500,
+          letterSpacing: "0.04em",
+          color: "var(--danger)",
         }}>
-          <span style={{fontSize:"13px"}}>⚠️</span>
+          <span>⚠</span>
           Each problem compounds the next — left unaddressed, they become systemic
         </div>
       </div>
 
-      {/* ── 8 cards ── */}
+      {/* grid */}
       <div style={{
-        display:"grid",
-        gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",
-        gap:"20px",
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+        gap: "16px",
+        width: "100%",
       }}>
-        {PROBLEMS.map((p,i) => <ProblemCard key={p.title} problem={p} index={i}/>)}
+        {PROBLEMS.map((p, i) => <ProblemCard key={p.title} problem={p} index={i} />)}
       </div>
-
     </div>
   );
 }

@@ -1,4 +1,4 @@
-const API = "http://localhost:8080";
+const API = "https://ruralops-platform-production.up.railway.app";
 
 const AuthService = {
 

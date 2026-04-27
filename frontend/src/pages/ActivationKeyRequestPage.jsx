@@ -277,7 +277,7 @@ export default function ActivationKeyRequestPage() {
 
     setLoading(true);
     try {
-      const res  = await fetch("http://localhost:8080/activation/request", {
+      const res  = await fetch("https://ruralops-platform-production.up.railway.app/activation/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accountType: toBackendType(accountId), accountId }),

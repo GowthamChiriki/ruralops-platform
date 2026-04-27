@@ -198,7 +198,7 @@ export default function ActivateAccountPage() {
 
     setLoading(true);
     try {
-      const res  = await fetch(`http://localhost:8080${route.endpoint}`, {
+      const res  = await fetch(`https://ruralops-platform-production.up.railway.app${route.endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(route.payload),

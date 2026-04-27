@@ -1,92 +1,79 @@
-import ruralopsLogo from "../assets/ruralops-logo.png";
 import "../styles/Footer.css";
 
 function Footer() {
   return (
-    <footer className="got-footer">
-      <div className="got-footer__topbar" />
-      <div className="got-footer__orb" />
-      <div className="got-footer__grid-bg" />
+    <footer className="ro-footer">
+      <div className="ro-footer__inner">
 
-      <div className="got-footer__inner">
-        <div className="got-footer__cols">
+        <div className="ro-footer__cols">
 
-          {/* ── BRAND ── */}
-          <div>
-            <div className="got-brand__sigil">
-            
-              <div className="got-brand__text-block">
-                <div className="got-brand__name">RuralOps</div>
-                <div className="got-brand__sub">Governance Platform</div>
+          {/* brand */}
+          <div className="ro-footer__brand">
+            <div className="ro-footer__logo-row">
+              <div className="ro-footer__logo-mark">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="2" width="5" height="5" rx="1.2" fill="currentColor" opacity="0.9"/>
+                  <rect x="9" y="2" width="5" height="5" rx="1.2" fill="currentColor" opacity="0.5"/>
+                  <rect x="2" y="9" width="5" height="5" rx="1.2" fill="currentColor" opacity="0.5"/>
+                  <rect x="9" y="9" width="5" height="5" rx="1.2" fill="currentColor" opacity="0.9"/>
+                </svg>
               </div>
+              <span className="ro-footer__brand-name">RuralOps</span>
             </div>
-            <p className="got-brand__desc">
+            <p className="ro-footer__brand-desc">
               A governance-focused operations platform for rural development —
               built on structured oversight, accountability, and timely
               intervention across every ward.
             </p>
-            <div className="got-brand__seal">
-              <span className="got-brand__seal-dot" />
+            <div className="ro-footer__status-pill">
+              <span className="ro-footer__status-dot" />
               Civic Registry Active
             </div>
           </div>
 
-          {/* ── PLATFORM ── */}
+          {/* Platform */}
           <div>
-            <p className="got-col__heading">Platform</p>
-            <ul className="got-links">
-              {["Citizen Portal","Role Dashboards","Program Monitoring","Grievance Tracking","AI Verification"].map(l => (
-                <li key={l}><a href="#" className="got-link">{l} <span className="got-link__arrow">›</span></a></li>
+            <p className="ro-footer__col-heading">Platform</p>
+            <ul className="ro-footer__links">
+              {["Citizen Portal", "Role Dashboards", "Program Monitoring", "Grievance Tracking", "AI Verification"].map(l => (
+                <li key={l}><a href="#" className="ro-footer__link">{l}</a></li>
               ))}
             </ul>
           </div>
 
-          {/* ── RESOURCES ── */}
+          {/* Resources */}
           <div>
-            <p className="got-col__heading">Resources</p>
-            <ul className="got-links">
-              {["Documentation","Usage Guidelines","FAQs","Support"].map(l => (
-                <li key={l}><a href="#" className="got-link">{l} <span className="got-link__arrow">›</span></a></li>
+            <p className="ro-footer__col-heading">Resources</p>
+            <ul className="ro-footer__links">
+              {["Documentation", "Usage Guidelines", "FAQs", "Support"].map(l => (
+                <li key={l}><a href="#" className="ro-footer__link">{l}</a></li>
               ))}
             </ul>
           </div>
 
-          {/* ── ACCESS & LEGAL ── */}
+          {/* Access & Legal */}
           <div>
-            <p className="got-col__heading">Access & Legal</p>
-            <ul className="got-links">
-              {["Login","Privacy Policy","Terms of Use","Accessibility"].map(l => (
-                <li key={l}><a href="#" className="got-link">{l} <span className="got-link__arrow">›</span></a></li>
+            <p className="ro-footer__col-heading">Access & Legal</p>
+            <ul className="ro-footer__links">
+              {["Login", "Privacy Policy", "Terms of Use", "Accessibility"].map(l => (
+                <li key={l}><a href="#" className="ro-footer__link">{l}</a></li>
               ))}
             </ul>
           </div>
-
         </div>
 
-        {/* ── ORNAMENTAL DIVIDER ── */}
-        <div className="got-divider">
-          <div className="got-divider__line" />
-          <div className="got-divider__center">
-            <div className="got-divider__gem" />
-            <div className="got-divider__dash" />
-            <div className="got-divider__gem got-divider__gem--lg" />
-            <div className="got-divider__dash" />
-            <div className="got-divider__gem" />
-          </div>
-          <div className="got-divider__line" />
-        </div>
+        <div className="ro-footer__divider" />
 
-        {/* ── BOTTOM BAR ── */}
-        <div className="got-footer__bottom">
-          <p className="got-footer__copyright">
-            © <strong>{new Date().getFullYear()}</strong> RuralOps — All rights reserved
+        <div className="ro-footer__bottom">
+          <p className="ro-footer__copyright">
+            © {new Date().getFullYear()} RuralOps — All rights reserved
           </p>
-          <p className="got-footer__crest">⚜ Per Officium et Honorem ⚜</p>
-          <p className="got-footer__notice">
-            <span className="got-footer__notice-icon" />
+          <p className="ro-footer__notice">
+            <span className="ro-footer__notice-dot" />
             Administrative access restricted to authorized personnel
           </p>
         </div>
+
       </div>
     </footer>
   );

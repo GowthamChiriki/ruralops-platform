@@ -1,0 +1,155 @@
+/* ═══════════════════════════════════════════════
+   SOVEREIGN EARTH — Global Design System
+   ═══════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Fira+Code:wght@400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── DARK MODE (default) ── */
+:root {
+  /* Backgrounds */
+  --bg:         #0a0c09;
+  --bg-card:    #0f120d;
+  --bg-subtle:  #141810;
+  --bg-raised:  #191e14;
+
+  /* Borders */
+  --border:     rgba(180,154,90,0.10);
+  --border-med: rgba(180,154,90,0.22);
+  --border-hi:  rgba(180,154,90,0.40);
+
+  /* Text */
+  --text-1: #e8e0ce;
+  --text-2: #a89f88;
+  --text-3: #6b6456;
+  --text-4: #3e3830;
+
+  /* Brass Gold — primary accent */
+  --accent:      #b49a5a;
+  --accent-2:    #d4b97a;
+  --accent-text: #c8aa6a;
+  --accent-sub:  rgba(180,154,90,0.08);
+  --accent-brd:  rgba(180,154,90,0.20);
+
+  /* Sage Green — secondary */
+  --success:     #6b8c5a;
+  --success-text:#7da06a;
+  --success-sub: rgba(107,140,90,0.10);
+  --success-brd: rgba(107,140,90,0.22);
+
+  /* Danger — burnt sienna */
+  --danger:      #b85c3a;
+  --danger-text: #cc6a45;
+  --danger-sub:  rgba(184,92,58,0.10);
+  --danger-brd:  rgba(184,92,58,0.22);
+
+  /* Warn — ochre */
+  --warn:        #c49a3a;
+  --warn-text:   #d4aa4a;
+  --warn-sub:    rgba(196,154,58,0.10);
+  --warn-brd:    rgba(196,154,58,0.22);
+
+  /* Info — slate blue */
+  --info:        #5a7a9a;
+  --info-text:   #6a8faf;
+  --info-sub:    rgba(90,122,154,0.10);
+  --info-brd:    rgba(90,122,154,0.22);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.5);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5);
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  /* Typography */
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'Fira Code', monospace;
+}
+
+/* ── LIGHT MODE ── */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg:         #f5f1e6;
+    --bg-card:    #faf7ef;
+    --bg-subtle:  #ede9da;
+    --bg-raised:  #e8e3d4;
+
+    --border:     rgba(120,95,50,0.14);
+    --border-med: rgba(120,95,50,0.28);
+    --border-hi:  rgba(120,95,50,0.50);
+
+    --text-1: #1a1509;
+    --text-2: #5a4f38;
+    --text-3: #8a7a60;
+    --text-4: #b0a088;
+
+    --accent:      #8a6e30;
+    --accent-2:    #b49a5a;
+    --accent-text: #7a5e20;
+    --accent-sub:  rgba(138,110,48,0.08);
+    --accent-brd:  rgba(138,110,48,0.20);
+
+    --success:     #4a6c3a;
+    --success-text:#3a5c2a;
+    --success-sub: rgba(74,108,58,0.08);
+    --success-brd: rgba(74,108,58,0.20);
+
+    --danger:      #9a3a1a;
+    --danger-text: #8a2a0a;
+    --danger-sub:  rgba(154,58,26,0.08);
+    --danger-brd:  rgba(154,58,26,0.20);
+
+    --warn:        #9a7a1a;
+    --warn-text:   #8a6a0a;
+    --warn-sub:    rgba(154,122,26,0.08);
+    --warn-brd:    rgba(154,122,26,0.20);
+
+    --info:        #3a5a7a;
+    --info-text:   #2a4a6a;
+    --info-sub:    rgba(58,90,122,0.08);
+    --info-brd:    rgba(58,90,122,0.20);
+
+    --shadow-xs: 0 1px 2px rgba(80,60,20,0.12);
+    --shadow-sm: 0 2px 8px rgba(80,60,20,0.16);
+    --shadow-md: 0 8px 24px rgba(80,60,20,0.18), 0 2px 6px rgba(80,60,20,0.10);
+    --shadow-lg: 0 16px 48px rgba(80,60,20,0.22), 0 4px 12px rgba(80,60,20,0.14);
+  }
+}
+
+html {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-body);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--bg);
+  min-height: 100vh;
+  width: 100%;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.25); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center; }
+}

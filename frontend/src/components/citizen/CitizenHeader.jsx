@@ -17,7 +17,7 @@ function CitizenHeader({ data }) {
       <div className="dashboard-profile">
 
         <img
-          src={`http://localhost:8080${data.profilePhoto}`}
+          src={`https://ruralops-platform-production.up.railway.app${data.profilePhoto}`}
           alt="profile"
           className="dashboard-avatar"
         />

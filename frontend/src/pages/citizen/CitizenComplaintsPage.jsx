@@ -4,7 +4,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import "../../styles/CitizenComplaints.css";
 
-const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080"; // Fix 1: consistent env var
+const API = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app"; // Fix 1: consistent env var
 
 /* ════════════════════════════════════════════════════════════
    STATUS CONFIG

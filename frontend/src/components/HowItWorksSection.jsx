@@ -2,406 +2,203 @@ import { useState } from "react";
 
 const STEP_ICONS = ["⚙️", "✅", "🔑", "🛡", "📊", "📢", "🔍", "🚀"];
 
-const STEP_COLORS = [
-  { base: "#236e80", bright: "#38a0b8", bg: "rgba(35,110,128,.12)",  border: "rgba(35,110,128,.26)"  },
-  { base: "#378a55", bright: "#52b874", bg: "rgba(55,138,85,.12)",   border: "rgba(55,138,85,.26)"   },
-  { base: "#c07818", bright: "#e8a830", bg: "rgba(192,120,24,.12)",  border: "rgba(192,120,24,.26)"  },
-  { base: "#7c5cfc", bright: "#a080ff", bg: "rgba(124,92,252,.12)",  border: "rgba(124,92,252,.26)"  },
-  { base: "#9e3328", bright: "#c84030", bg: "rgba(158,51,40,.12)",   border: "rgba(158,51,40,.26)"   },
-  { base: "#2f7d7b", bright: "#4fd1c5", bg: "rgba(47,125,123,.12)",  border: "rgba(47,125,123,.26)"  },
-  { base: "#8b5e3c", bright: "#c78a5a", bg: "rgba(139,94,60,.12)",   border: "rgba(139,94,60,.26)"   },
-  { base: "#3c5c9e", bright: "#6f9cff", bg: "rgba(60,92,158,.12)",   border: "rgba(60,92,158,.26)"   },
-];
-
 const STEPS = [
-  {
-    title: "Provisioning & Registration",
-    description: "Administrative accounts are provisioned by authority. Citizens may self-register, but no access is granted yet.",
-  },
-  {
-    title: "Approval & Verification",
-    description: "Citizen records are reviewed and approved by village administration before becoming official.",
-  },
-  {
-    title: "Secure Activation",
-    description: "Approved users activate accounts using a secure, one-time key and set credentials.",
-  },
-  {
-    title: "Role-Based Access",
-    description: "Each user sees only what their role permits — from state oversight to village execution.",
-  },
-  {
-    title: "Monitoring & Intervention",
-    description: "Progress, delays, and risks are surfaced early so support and intervention happen on time.",
-  },
-  {
-    title: "Citizen Feedback Loop",
-    description: "Citizens and workers submit feedback, complaints, and suggestions which become actionable signals for administrators.",
-  },
-  {
-    title: "Auditing & Accountability",
-    description: "All actions are logged and auditable, ensuring transparency and responsibility across every administrative level.",
-  },
-  {
-    title: "Policy Improvement",
-    description: "Insights from field data guide improvements to workflows, policies, and resource allocation across the system.",
-  },
+  { title: "Provisioning & Registration",  description: "Administrative accounts are provisioned by authority. Citizens may self-register, but no access is granted yet." },
+  { title: "Approval & Verification",       description: "Citizen records are reviewed and approved by village administration before becoming official." },
+  { title: "Secure Activation",             description: "Approved users activate accounts using a secure, one-time key and set credentials." },
+  { title: "Role-Based Access",             description: "Each user sees only what their role permits — from state oversight to village execution." },
+  { title: "Monitoring & Intervention",     description: "Progress, delays, and risks are surfaced early so support and intervention happen on time." },
+  { title: "Citizen Feedback Loop",         description: "Citizens and workers submit feedback, complaints, and suggestions which become actionable signals." },
+  { title: "Auditing & Accountability",     description: "All actions are logged and auditable, ensuring transparency and responsibility across every level." },
+  { title: "Policy Improvement",            description: "Insights from field data guide improvements to workflows, policies, and resource allocation." },
 ];
 
-/* ── Pipeline segment row ── */
-function PipelineBar({ total, activeIndex, activeColor }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "3px", marginBottom: "16px" }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            height: "3px",
-            flex: i === activeIndex ? 2 : 1,
-            borderRadius: "999px",
-            background:
-              i === activeIndex
-                ? `linear-gradient(90deg, ${activeColor.base}, ${activeColor.bright})`
-                : i < activeIndex
-                  ? "rgba(255,255,255,.18)"
-                  : "rgba(255,255,255,.06)",
-            transition: "flex .3s ease",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
+/* ── Card ── */
 function StepCard({ step, index }) {
-  const [hovered, setHovered] = useState(false);
-  const c = STEP_COLORS[index];
+  const [hov, setHov] = useState(false);
 
   return (
     <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
       style={{
-        background: "linear-gradient(145deg, #0c1519 0%, #091014 100%)",
-        border: `1px solid ${hovered ? c.border : "rgba(255,255,255,.07)"}`,
-        borderRadius: "12px",
-        padding: "24px",
-        position: "relative",
-        overflow: "hidden",
-        cursor: "default",
-        transform: hovered ? "translateY(-6px)" : "translateY(0)",
-        boxShadow: hovered
-          ? `0 20px 48px rgba(0,0,0,.60), 0 0 28px ${c.bg}`
-          : "0 2px 8px rgba(0,0,0,.65), 0 10px 28px rgba(0,0,0,.55)",
+        background: "var(--bg-card)",
+        border: `1px solid ${hov ? "var(--accent-brd)" : "var(--border)"}`,
+        borderRadius: "var(--r-lg)",
+        padding: "26px",
+        position: "relative", overflow: "hidden", cursor: "default",
+        transform: hov ? "translateY(-5px)" : "translateY(0)",
+        boxShadow: hov
+          ? "var(--shadow-md), 0 0 0 3px var(--accent-sub), 0 0 32px rgba(180,154,90,0.10)"
+          : "var(--shadow-xs)",
         transition:
-          "transform .28s cubic-bezier(0.22,1,0.36,1), box-shadow .28s ease, border-color .28s ease",
+          "transform 0.26s cubic-bezier(0.22,1,0.36,1), box-shadow 0.26s ease, border-color 0.22s ease",
       }}
     >
-      {/* Top accent line */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0, left: 0, right: 0,
-          height: "2px",
-          background: `linear-gradient(90deg, ${c.base}, ${c.bright}, transparent)`,
-          transform: hovered ? "scaleX(1)" : "scaleX(0)",
-          transformOrigin: "left",
-          transition: "transform .4s cubic-bezier(0.22,1,0.36,1)",
-        }}
-      />
+      {/* top accent */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: "2px",
+        background: "linear-gradient(90deg, var(--accent), var(--accent-2), transparent)",
+        opacity: hov ? 1 : 0, transition: "opacity 0.3s ease",
+      }}/>
 
-      {/* Corner glow */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: "-60px", right: "-60px",
-          width: "160px", height: "160px",
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${c.bg} 0%, transparent 70%)`,
-          opacity: hovered ? 1 : 0,
-          transform: hovered ? "scale(1)" : "scale(.6)",
-          transition: "opacity .4s ease, transform .4s cubic-bezier(0.22,1,0.36,1)",
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Step pill + icon row */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "18px",
-        }}
-      >
-        {/* Step number pill */}
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            fontFamily: "'Cinzel', Georgia, serif",
-            fontSize: "9px",
-            fontWeight: 700,
-            letterSpacing: ".14em",
-            textTransform: "uppercase",
-            color: c.bright,
-            background: c.bg,
-            border: `1px solid ${c.border}`,
-            padding: "4px 11px",
-            borderRadius: "999px",
-          }}
-        >
-          <span
-            style={{
-              width: "5px", height: "5px",
-              borderRadius: "50%",
-              background: c.base,
-              flexShrink: 0,
-              boxShadow: `0 0 5px ${c.base}`,
-            }}
-          />
+      {/* step pill + icon */}
+      <div style={{
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between", marginBottom: "18px",
+      }}>
+        <span style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px", fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase",
+          color: "var(--accent-text)",
+          background: "var(--accent-sub)",
+          border: "1px solid var(--accent-brd)",
+          padding: "3px 10px", borderRadius: "100px",
+        }}>
           Step {index + 1}
-        </div>
+        </span>
 
-        {/* Icon */}
-        <div
-          style={{
-            width: "42px", height: "42px",
-            borderRadius: "10px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "18px",
-            background: hovered
-              ? `linear-gradient(135deg, ${c.bg} 0%, rgba(255,255,255,.04) 100%)`
-              : `linear-gradient(135deg, ${c.bg} 0%, rgba(255,255,255,.02) 100%)`,
-            border: `1px solid ${hovered ? c.border : c.bg}`,
-            transform: hovered ? "scale(1.12) rotate(-5deg)" : "scale(1) rotate(0deg)",
-            transition:
-              "transform .28s cubic-bezier(0.34,1.56,0.64,1), background .28s ease, border-color .28s ease",
-            boxShadow: hovered ? `0 0 18px ${c.bg}` : "none",
-          }}
-        >
+        <div style={{
+          width: "42px", height: "42px", borderRadius: "var(--r-md)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "18px",
+          background: hov ? "var(--accent-sub)" : "var(--bg-subtle)",
+          border: `1px solid ${hov ? "var(--accent-brd)" : "var(--border)"}`,
+          transform: hov ? "scale(1.12) rotate(-6deg)" : "scale(1) rotate(0deg)",
+          transition:
+            "transform 0.28s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease, border-color 0.2s ease",
+        }}>
           {STEP_ICONS[index]}
         </div>
       </div>
 
-      {/* Pipeline progress bar */}
-      <PipelineBar total={STEPS.length} activeIndex={index} activeColor={c} />
+      {/* progress bar — 8 segments */}
+      <div style={{ display: "flex", gap: "3px", marginBottom: "18px" }}>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} style={{
+            height: "2px",
+            flex: i === index ? 3 : 1,
+            borderRadius: "999px",
+            background: i < index
+              ? "var(--accent)"
+              : i === index
+              ? "linear-gradient(90deg, var(--accent), var(--accent-2))"
+              : "var(--border)",
+            transition: "flex 0.3s ease",
+          }}/>
+        ))}
+      </div>
 
-      {/* Title */}
-      <h3
-        style={{
-          fontFamily: "'Cinzel', Georgia, serif",
-          fontSize: "13px",
-          fontWeight: 700,
-          letterSpacing: ".07em",
-          color: hovered ? c.bright : "#dde9dd",
-          marginBottom: "10px",
-          marginTop: 0,
-          transition: "color .2s ease",
-        }}
-      >
+      <h3 style={{
+        fontFamily: "var(--font-head)",
+        fontSize: "15px", fontWeight: 700, letterSpacing: "-0.02em",
+        color: "var(--text-1)", marginBottom: "10px",
+      }}>
         {step.title}
       </h3>
 
-      {/* Description */}
-      <p
-        style={{
-          fontFamily: "'Crimson Pro', Georgia, serif",
-          fontSize: "14.5px",
-          color: "#5d785d",
-          lineHeight: 1.74,
-          margin: 0,
-        }}
-      >
+      <p style={{
+        fontSize: "13.5px", color: "var(--text-2)", lineHeight: 1.68, fontWeight: 300,
+      }}>
         {step.description}
       </p>
-
-      {/* Bottom expanding bar */}
-      <div
-        style={{
-          marginTop: "18px",
-          height: "3px",
-          borderRadius: "999px",
-          background: `linear-gradient(90deg, ${c.base}, ${c.bright})`,
-          width: hovered ? "100%" : "24px",
-          opacity: hovered ? 1 : 0.35,
-          transition: "width .4s cubic-bezier(0.22,1,0.36,1), opacity .3s ease",
-        }}
-      />
     </div>
   );
 }
 
+/* ── Section ── */
 function HowItWorksSection() {
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", width: "100%" }}>
 
-      {/* Section header */}
       <div style={{ marginBottom: "56px" }}>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "9px",
-            fontFamily: "'Cinzel', Georgia, serif",
-            fontSize: "10px",
-            fontWeight: 600,
-            letterSpacing: ".22em",
-            textTransform: "uppercase",
-            color: "#c9a227",
-            background: "rgba(201,162,39,.09)",
-            border: "1px solid rgba(201,162,39,.26)",
-            padding: "7px 16px",
-            borderRadius: "2px",
-            marginBottom: "20px",
-            boxShadow: "0 0 18px rgba(201,162,39,.10), inset 0 0 10px rgba(201,162,39,.04)",
-          }}
-        >
-          ⚔ Process Overview
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: "8px",
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px", fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase",
+          color: "var(--accent-text)", background: "var(--accent-sub)", border: "1px solid var(--accent-brd)",
+          padding: "5px 13px", borderRadius: "100px", marginBottom: "22px",
+        }}>
+          <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }}/>
+          Process Overview
         </div>
 
-        <h2
-          style={{
-            fontFamily: "'Cinzel', Georgia, serif",
-            fontSize: "clamp(24px, 2.8vw, 40px)",
-            fontWeight: 800,
-            letterSpacing: ".04em",
-            lineHeight: 1.17,
-            color: "#dde9dd",
-            marginBottom: "16px",
-            marginTop: 0,
-          }}
-        >
+        <h2 style={{
+          fontFamily: "var(--font-head)",
+          fontSize: "clamp(28px,3.2vw,44px)", fontWeight: 800, letterSpacing: "-0.04em",
+          lineHeight: 1.05, color: "var(--text-1)", marginBottom: "16px", marginTop: 0,
+        }}>
           How{" "}
-          <span
-            style={{
-              fontStyle: "italic",
-              background:
-                "linear-gradient(270deg, #c9a227, #f5d76e, #e8c547, #c9a227, #a87d1a, #e8c547, #c9a227)",
-              backgroundSize: "400% 400%",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              animation: "shimmerGold 5s ease infinite",
-            }}
-          >
-            RuralOps Works
+          <span style={{
+            background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 60%, var(--accent) 100%)",
+            backgroundSize: "200% auto",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+          }}>
+            RuralOps works
           </span>
         </h2>
 
-        <p
-          style={{
-            fontFamily: "'Crimson Pro', Georgia, serif",
-            fontSize: "17px",
-            color: "#5d785d",
-            lineHeight: 1.84,
-            maxWidth: "540px",
-            margin: 0,
-          }}
-        >
+        <p style={{
+          fontSize: "15.5px", color: "var(--text-2)", lineHeight: 1.75,
+          maxWidth: "540px", fontWeight: 300,
+        }}>
           RuralOps follows official administrative hierarchies to ensure
           accountability, transparency, and controlled access at every level —
           forming a complete closed-loop governance engine.
         </p>
 
-        {/* Closed-loop indicator strip */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0",
-            marginTop: "28px",
-            maxWidth: "580px",
-            overflowX: "auto",
-            paddingBottom: "4px",
-          }}
-        >
+        {/* step flow strip */}
+        <div style={{
+          display: "flex", alignItems: "center",
+          marginTop: "32px", maxWidth: "620px",
+          overflowX: "auto", paddingBottom: "6px",
+          gap: 0,
+        }}>
           {STEPS.map((s, i) => {
-            const c = STEP_COLORS[i];
             const isLast = i === STEPS.length - 1;
             return (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0",
-                  flexShrink: 0,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "5px",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "28px", height: "28px",
-                      borderRadius: "50%",
-                      background: c.bg,
-                      border: `1px solid ${c.border}`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "12px",
-                      boxShadow: `0 0 8px ${c.bg}`,
-                    }}
-                  >
+              <div key={i} style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+                <div style={{
+                  display: "flex", flexDirection: "column",
+                  alignItems: "center", gap: "5px",
+                }}>
+                  <div style={{
+                    width: "30px", height: "30px", borderRadius: "50%",
+                    background: "var(--accent-sub)", border: "1px solid var(--accent-brd)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "12px",
+                  }}>
                     {STEP_ICONS[i]}
                   </div>
-                  <span
-                    style={{
-                      fontFamily: "'Cinzel', Georgia, serif",
-                      fontSize: "7px",
-                      fontWeight: 700,
-                      letterSpacing: ".06em",
-                      color: c.bright,
-                      opacity: .7,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
+                  <span style={{
+                    fontFamily: "var(--font-mono)", fontSize: "8px", fontWeight: 600,
+                    color: "var(--accent-text)", opacity: 0.65,
+                    letterSpacing: "0.06em",
+                  }}>
                     {i + 1}
                   </span>
                 </div>
-
-                {/* Connector arrow */}
                 {!isLast && (
-                  <div
-                    style={{
-                      width: "22px", height: "1px",
-                      background: `linear-gradient(90deg, ${c.border}, ${STEP_COLORS[i + 1].border})`,
-                      position: "relative",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <div
-                      style={{
-                        position: "absolute",
-                        right: "-1px", top: "-3px",
-                        width: 0, height: 0,
-                        borderTop: "3.5px solid transparent",
-                        borderBottom: "3.5px solid transparent",
-                        borderLeft: `5px solid ${STEP_COLORS[i + 1].border}`,
-                      }}
-                    />
+                  <div style={{
+                    width: "22px", height: "1px",
+                    background: "linear-gradient(90deg, var(--accent-brd), var(--border))",
+                    position: "relative", flexShrink: 0,
+                  }}>
+                    <div style={{
+                      position: "absolute", right: "-1px", top: "-3px",
+                      width: 0, height: 0,
+                      borderTop: "3px solid transparent",
+                      borderBottom: "3px solid transparent",
+                      borderLeft: "5px solid var(--accent-brd)",
+                    }}/>
                   </div>
                 )}
-
-                {/* Loop-back arrow on last item */}
                 {isLast && (
-                  <div
-                    style={{
-                      marginLeft: "6px",
-                      fontFamily: "'Cinzel', Georgia, serif",
-                      fontSize: "9px",
-                      color: c.bright,
-                      opacity: .6,
-                    }}
-                  >
-                    ↺
-                  </div>
+                  <div style={{
+                    marginLeft: "7px",
+                    fontFamily: "var(--font-mono)", fontSize: "11px",
+                    color: "var(--accent-text)", opacity: 0.5,
+                  }}>↺</div>
                 )}
               </div>
             );
@@ -409,14 +206,13 @@ function HowItWorksSection() {
         </div>
       </div>
 
-      {/* Steps grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: "20px",
-        }}
-      >
+      {/* grid */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+        gap: "16px",
+        width: "100%",
+      }}>
         {STEPS.map((step, index) => (
           <StepCard key={index} step={step} index={index} />
         ))}

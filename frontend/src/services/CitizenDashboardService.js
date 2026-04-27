@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE = "http://localhost:8080";
+const API_BASE = "https://ruralops-platform-production.up.railway.app";
 
 /**
  * Loads the citizen dashboard from backend

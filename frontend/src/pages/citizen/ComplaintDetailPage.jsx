@@ -5,7 +5,7 @@ import Footer from "../../components/Footer";
 import "../../styles/ComplaintDetail.css";
 
 /* Fix — centralised API base URL */
-const API = "http://localhost:8080";
+const API = "https://ruralops-platform-production.up.railway.app";
 
 /* ═══════════════════════════════════════════════════════════════
    CONFIG

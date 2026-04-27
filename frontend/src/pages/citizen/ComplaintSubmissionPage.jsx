@@ -5,7 +5,7 @@ import Footer from "../../components/Footer";
 import "../../styles/ComplaintSubmission.css";
 
 // Fix 1: consistent env var across all modules
-const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+const API = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app";
 
 const CATEGORIES = [
   { value: "GARBAGE",       label: "🗑 Garbage & Sanitation",    group: "Sanitation",      priority: 3 },

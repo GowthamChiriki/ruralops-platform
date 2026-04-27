@@ -5,7 +5,7 @@ import Footer from "../../components/Footer"
 import "../../styles/WorkerNotifications.css"
 
 /* ─── API base — single source of truth ─── */
-const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080"
+const API = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app"
 
 const PAGE_SIZE = 5
 

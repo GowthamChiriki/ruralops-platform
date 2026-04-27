@@ -12,7 +12,7 @@
  * ─────────────────────────────────────────────────────────────
  */
 
-const BASE = "http://localhost:8080";
+const BASE = "https://ruralops-platform-production.up.railway.app";
 
 /* ─── shared helper ─── */
 async function request(url, options = {}) {

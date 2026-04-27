@@ -3,7 +3,7 @@ import Navbar from "../components/Navbar";
 import "../Styles/CitizenRegistration.css";
 
 /* ─────────────────────────────────────────
-   VILLAGES  (unchanged)
+   VILLAGES
 ───────────────────────────────────────── */
 const villages = [
   { id: "ALM-5889",  name: "Alamanda" },
@@ -49,11 +49,11 @@ const villages = [
 ];
 
 /* ─────────────────────────────────────────
-   VALIDATION  (unchanged)
+   VALIDATION
 ───────────────────────────────────────── */
 const validators = {
   fullName:        (v) => v.trim().length < 2      ? "Full name must be at least 2 characters."    : "",
-  fatherName:      (v) => v.trim().length < 2      ? "Father name must be at least 2 characters."  : "",
+  fatherName:      (v) => v.trim().length < 2      ? "Father's name must be at least 2 characters." : "",
   aadhaarNumber:   (v) => !/^\d{12}$/.test(v)      ? "Aadhaar must be exactly 12 digits."          : "",
   rationCardNumber:(v) => v.trim().length < 3      ? "Enter a valid ration card number."           : "",
   phoneNumber:     (v) => !/^[6-9]\d{9}$/.test(v) ? "Phone must be 10 digits starting with 6–9." : "",
@@ -62,9 +62,9 @@ const validators = {
 };
 
 const STEPS = [
-  { id: 1, label: "Personal Info" },
-  { id: 2, label: "Documents"    },
-  { id: 3, label: "Village"      },
+  { id: 1, label: "Identity"  },
+  { id: 2, label: "Documents" },
+  { id: 3, label: "Confirm"   },
 ];
 const STEP_FIELDS = {
   1: ["fullName","fatherName","phoneNumber","email"],
@@ -85,13 +85,13 @@ const TICKER_ITEMS = [
   { state: "TARUVA",          dot: "green", text: "Welfare disbursement: ₹48,000" },
   { state: "MUSHIDIPALLE",    dot: "blue",  text: "Land records updated" },
   { state: "SAMMEDA",         dot: "green", text: "8 approvals completed" },
-  { state: "GARISINGI",       dot: "red",   text: "2 document re-submissions needed" },
+  { state: "GARISINGI",       dot: "red",   text: "2 document re-submissions required" },
   { state: "DEVARAPALLE",     dot: "green", text: "Census sync: 99.2% complete" },
   { state: "NAGAYYAPETA",     dot: "gold",  text: "Scheme enrollment open till month-end" },
 ];
 
 /* ─────────────────────────────────────────
-   TOAST — rAF progress drain, 5 types
+   TOAST SYSTEM
 ───────────────────────────────────────── */
 let _tid = 0;
 
@@ -119,7 +119,6 @@ function ToastItem({ t, onDone }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [dismiss, dur]);
 
-  /* type → CSS class: success=emerald, error=crimson, info=amber, worker=violet */
   const typeClass = `toast-${t.type}`;
 
   return (
@@ -136,7 +135,7 @@ function ToastItem({ t, onDone }) {
       <button
         className="toast-dismiss"
         onClick={e => { e.stopPropagation(); dismiss(); }}
-        aria-label="Dismiss"
+        aria-label="Dismiss notification"
       >✕</button>
       <div
         className="toast-progress"
@@ -149,19 +148,37 @@ function ToastItem({ t, onDone }) {
 function useToast() {
   const [toasts, setToasts] = useState([]);
   const push = useCallback((type, label, sub, icon, dur) => {
-    const ICONS = { success:"⚔️", error:"🛡️", info:"📜", worker:"⚒️" };
+    const ICONS = { success: "✓", error: "✕", info: "→", worker: "◎" };
     setToasts(p => [...p, {
       id: ++_tid, type, label, sub,
-      icon: icon ?? ICONS[type] ?? "📜",
+      icon: icon ?? ICONS[type] ?? "→",
       duration: dur ?? 5000,
     }]);
   }, []);
   const remove  = useCallback(id => setToasts(p => p.filter(t => t.id !== id)), []);
-  const success = (l,s,i)   => push("success",l,s,i);
-  const error   = (l,s,i)   => push("error",l,s,i);
-  const info    = (l,s,i)   => push("info",l,s,i);
-  const worker  = (l,s,i)   => push("worker",l,s,i);
+  const success = (l, s, i) => push("success", l, s, i);
+  const error   = (l, s, i) => push("error",   l, s, i);
+  const info    = (l, s, i) => push("info",    l, s, i);
+  const worker  = (l, s, i) => push("worker",  l, s, i);
   return { toasts, remove, success, error, info, worker };
+}
+
+/* ─────────────────────────────────────────
+   THEME TOGGLE
+───────────────────────────────────────── */
+function useTheme() {
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem("ruralops-theme") || "dark"; }
+    catch { return "dark"; }
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("ruralops-theme", theme); } catch {}
+  }, [theme]);
+
+  const toggle = () => setTheme(t => t === "dark" ? "light" : "dark");
+  return { theme, toggle };
 }
 
 /* ─────────────────────────────────────────
@@ -173,7 +190,14 @@ export default function CitizenRegistrationPage() {
   const [touched, setTouched] = useState({});
   const [step,    setStep]    = useState(1);
   const [loading, setLoading] = useState(false);
+  const [toggleKey, setToggleKey] = useState(0);
   const toast = useToast();
+  const { theme, toggle } = useTheme();
+
+  const handleThemeToggle = () => {
+    toggle();
+    setToggleKey(k => k + 1);
+  };
 
   const validateField = (name, value) => validators[name]?.(value) ?? "";
   const validateStep  = stepNum => {
@@ -200,14 +224,13 @@ export default function CitizenRegistrationPage() {
     setErrors(p => ({ ...p, ...stepErrors }));
     if (Object.keys(stepErrors).length === 0) {
       setStep(s => s + 1);
-      toast.info(`Step ${step} Complete`, "Moving to the next section…");
+      toast.info(`Step ${step} Complete`, "Proceeding to the next section.");
     } else {
-      toast.error("Validation Failed", "Please fix the highlighted fields.");
+      toast.error("Validation Required", "Please review the highlighted fields.");
     }
   };
   const handleBack = () => setStep(s => s - 1);
 
-  /* ── SUBMIT — endpoint unchanged ── */
   const handleSubmit = async e => {
     e.preventDefault();
     const allErrors = {};
@@ -215,26 +238,26 @@ export default function CitizenRegistrationPage() {
     setTouched(Object.fromEntries(Object.keys(validators).map(f => [f, true])));
     setErrors(allErrors);
     if (Object.keys(allErrors).length > 0) {
-      toast.error("Submission Blocked", "Complete all required fields before submitting.");
+      toast.error("Submission Blocked", "Please complete all required fields before proceeding.");
       return;
     }
     setLoading(true);
-    toast.info("Dispatching Scroll…", "Sending registration to the realm's records.");
+    toast.info("Submitting Application…", "Transmitting your details to the district registry.");
     try {
-      const response = await fetch("http://localhost:8080/citizen/register", {
+      const response = await fetch("https://ruralops-platform-production.up.railway.app/citizen/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
       const text = await response.text();
       if (response.ok) {
-        toast.success("Oath Sworn — Registered!", text || "Your name has been entered into the rolls.");
+        toast.success("Registration Successful", text || "Your record has been entered into the district rolls.");
         setForm(EMPTY_FORM); setErrors({}); setTouched({}); setStep(1);
       } else {
-        toast.error("The Council Refuses", text || "Registration failed. Try again.");
+        toast.error("Registration Failed", text || "An error occurred. Please try again.");
       }
     } catch {
-      toast.error("Raven Unreachable", "Cannot reach the castle.");
+      toast.error("Connection Error", "Unable to reach the registration server. Check your connection.");
     }
     setLoading(false);
   };
@@ -257,7 +280,19 @@ export default function CitizenRegistrationPage() {
     <>
       <Navbar />
 
-      {/* ── TOAST PORTAL — top-right ── */}
+      {/* ── Theme Toggle ── */}
+      <button
+        className="theme-toggle"
+        onClick={handleThemeToggle}
+        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      >
+        <span className="theme-toggle-inner" key={toggleKey}>
+          {theme === "dark" ? "○" : "●"}
+        </span>
+      </button>
+
+      {/* ── Toast Portal ── */}
       <div className="toast-container" role="region" aria-label="Notifications" aria-live="polite">
         {toast.toasts.map(t => <ToastItem key={t.id} t={t} onDone={toast.remove} />)}
       </div>
@@ -265,34 +300,35 @@ export default function CitizenRegistrationPage() {
       {/* ══ MAIN PAGE ══ */}
       <section className="citizen-page">
 
-        {/* ── LEFT ── */}
+        {/* ── LEFT PANEL ── */}
         <div className="citizen-info">
           <div className="citizen-info-header">
 
-            {/* Eyebrow — AMBER */}
+            {/* Eyebrow */}
             <div className="citizen-eyebrow">
-              <span className="citizen-eyebrow-sword">⚔</span>
+              <span className="eyebrow-dot" />
               RuralOps Governance Network
             </div>
 
             <h1>
-              Let Your Name Be<br />
-              <span>Entered in the Village Ledger</span>
+              Register as an Official<br />
+              <span className="h1-sub">Village Citizen</span>
             </h1>
 
-            <p>
-              Swear your oath to the RuralOps Governance Network. Your Village
-              Administrative Officer shall verify your identity — and upon approval,
-              the gates to rural welfare programs and sovereign services shall open.
+            <p className="citizen-lead">
+              Submit your identity details to the RuralOps district registry. Upon
+              verification by your Village Administrative Officer, you will gain
+              access to welfare programs, land record services, and all sovereign
+              rural governance benefits.
             </p>
 
-            {/* Info points — TEAL icons */}
+            {/* Info points */}
             <div className="info-points">
               {[
-                { icon: "⚔️", text: "Identity verified by sworn VAO" },
-                { icon: "🏰", text: "Transparent welfare distribution" },
-                { icon: "📜", text: "Village-level governance access" },
-                { icon: "🛡️", text: "Sovereign data protection" },
+                { icon: "◎", text: "Identity verified by your Village Administrative Officer" },
+                { icon: "⊞", text: "Transparent, auditable welfare distribution" },
+                { icon: "≡", text: "Access to village-level governance services" },
+                { icon: "◈", text: "End-to-end data privacy and sovereignty" },
               ].map((pt, i) => (
                 <div className="info-point" key={i}>
                   <span className="info-point-icon">{pt.icon}</span>
@@ -300,9 +336,24 @@ export default function CitizenRegistrationPage() {
                 </div>
               ))}
             </div>
+
+            {/* Stats row */}
+            <div className="info-stats">
+              {[
+                { val: "40+",  lbl: "Villages" },
+                { val: "99.2%", lbl: "Sync Rate" },
+                { val: "3",    lbl: "Active Steps" },
+                { val: "24h",  lbl: "Avg. Approval" },
+              ].map((s, i) => (
+                <div className="info-stat" key={i}>
+                  <span className="info-stat-val">{s.val}</span>
+                  <span className="info-stat-lbl">{s.lbl}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Live Ticker — CRIMSON badge */}
+          {/* Live Ticker */}
           <div className="lp-live-ticker">
             <div className="lp-ticker-badge">
               <span className="lp-ticker-live-dot" />LIVE
@@ -320,16 +371,25 @@ export default function CitizenRegistrationPage() {
             </div>
           </div>
 
-
-
         </div>
 
         {/* ── RIGHT: Registration Card ── */}
         <div className="registration-glass-card">
 
-          <h2>Citizen Registration</h2>
+          <div className="card-header">
+            <h2 className="card-title">
+              <span className="card-title-icon">⚜</span>
+              Citizen Registration
+            </h2>
+            <div className="card-subtitle">
+              DIST. REGISTRY<br />
+              <span style={{ fontFamily: "var(--f-mono)", fontSize: "8px", letterSpacing: ".08em" }}>
+                REG-2026
+              </span>
+            </div>
+          </div>
 
-          {/* Step progress — teal active, emerald done, violet connector */}
+          {/* Step Progress */}
           <div className="step-progress" aria-label="Registration steps">
             {STEPS.map((s, i) => (
               <div key={s.id} className="step-progress-item">
@@ -346,47 +406,52 @@ export default function CitizenRegistrationPage() {
 
           <form onSubmit={handleSubmit} noValidate>
 
+            {/* ── Step 1: Identity ── */}
             {step === 1 && (
               <div className="form-step">
                 <p className="step-description">
-                  Declare your identity before the realm. Enter your personal and contact details with honesty.
+                  Provide your personal and contact information as it appears
+                  on your official government-issued identification.
                 </p>
                 <div className="registration-form-grid">
-                  {field("fullName",    "Full Name",    { type:"text",  required:true })}
-                  {field("fatherName",  "Father Name",  { type:"text",  required:true })}
-                  {field("phoneNumber", "Phone Number", { type:"tel",   maxLength:"10", required:true })}
-                  {field("email",       "Email Address",{ type:"email", required:true })}
+                  {field("fullName",    "Full Name",     { type: "text",  required: true, placeholder: "As on Aadhaar card" })}
+                  {field("fatherName",  "Father's Name", { type: "text",  required: true, placeholder: "As on Aadhaar card" })}
+                  {field("phoneNumber", "Mobile Number", { type: "tel",   maxLength: "10", required: true, placeholder: "10-digit mobile number" })}
+                  {field("email",       "Email Address", { type: "email", required: true, placeholder: "official@example.com" })}
                 </div>
               </div>
             )}
 
+            {/* ── Step 2: Documents ── */}
             {step === 2 && (
               <div className="form-step">
                 <p className="step-description">
-                  Bring forth your identity scrolls. The Village Administrative Officer shall examine them
-                  and bear witness to your claim before it is entered into the village record.
+                  Enter your government-issued document numbers. These will be
+                  verified by the Village Administrative Officer before approval.
                 </p>
                 <div className="registration-form-grid">
-                  {field("aadhaarNumber",    "Aadhaar Number",    { type:"text", maxLength:"12", inputMode:"numeric", required:true })}
-                  {field("rationCardNumber", "Ration Card Number",{ type:"text", required:true })}
+                  {field("aadhaarNumber",    "Aadhaar Number",    { type: "text", maxLength: "12", inputMode: "numeric", required: true, placeholder: "12-digit Aadhaar number" })}
+                  {field("rationCardNumber", "Ration Card Number",{ type: "text", required: true, placeholder: "e.g. AP-XXXXX-XXXXX" })}
                 </div>
               </div>
             )}
 
+            {/* ── Step 3: Village + Confirm ── */}
             {step === 3 && (
               <div className="form-step">
                 <p className="step-description">
-                  Choose your village and review the sworn declaration before the final seal is placed.
+                  Select your village and review your complete declaration before
+                  final submission to the district registry.
                 </p>
                 <div className="registration-form-grid">
                   <div className={`form-group full-width${errors.villageId && touched.villageId ? " field-error" : ""}`}>
-                    <label htmlFor="villageId">Select Your Village</label>
+                    <label htmlFor="villageId">Village of Residence</label>
                     <select
                       id="villageId" name="villageId"
                       value={form.villageId}
                       onChange={handleChange} onBlur={handleBlur} required
                     >
-                      <option value="">— Declare Your Village —</option>
+                      <option value="">— Select Your Village —</option>
                       {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                     </select>
                     {touched.villageId && errors.villageId && (
@@ -396,30 +461,35 @@ export default function CitizenRegistrationPage() {
                 </div>
 
                 <div className="review-summary">
-                  <h3>Review Your Declaration</h3>
+                  <h3>Review Your Application</h3>
                   <dl className="review-grid">
                     <div><dt>Full Name</dt>   <dd>{form.fullName        || "—"}</dd></div>
-                    <div><dt>Father Name</dt> <dd>{form.fatherName      || "—"}</dd></div>
-                    <div><dt>Phone</dt>       <dd>{form.phoneNumber     || "—"}</dd></div>
-                    <div><dt>Email</dt>       <dd>{form.email           || "—"}</dd></div>
-                    <div><dt>Aadhaar</dt>     <dd>{form.aadhaarNumber   ? `•••• •••• ${form.aadhaarNumber.slice(-4)}` : "—"}</dd></div>
-                    <div><dt>Ration Card</dt> <dd>{form.rationCardNumber|| "—"}</dd></div>
-                    <div><dt>Village</dt>     <dd>{villages.find(v => v.id === form.villageId)?.name || "—"}</dd></div>
+                    <div><dt>Father's Name</dt><dd>{form.fatherName      || "—"}</dd></div>
+                    <div><dt>Mobile</dt>       <dd>{form.phoneNumber     || "—"}</dd></div>
+                    <div><dt>Email</dt>        <dd>{form.email           || "—"}</dd></div>
+                    <div><dt>Aadhaar</dt>      <dd>{form.aadhaarNumber   ? `•••• •••• ${form.aadhaarNumber.slice(-4)}` : "—"}</dd></div>
+                    <div><dt>Ration Card</dt>  <dd>{form.rationCardNumber|| "—"}</dd></div>
+                    <div><dt>Village</dt>      <dd>{villages.find(v => v.id === form.villageId)?.name || "—"}</dd></div>
                   </dl>
                 </div>
               </div>
             )}
 
+            {/* ── Navigation ── */}
             <div className="step-nav">
               {step > 1 && (
-                <button type="button" className="btn-back" onClick={handleBack}>← Retreat</button>
+                <button type="button" className="btn-back" onClick={handleBack}>
+                  ← Back
+                </button>
               )}
               {step < 3 && (
-                <button type="button" className="btn-next" onClick={handleNext}>Advance →</button>
+                <button type="button" className="btn-next" onClick={handleNext}>
+                  Continue →
+                </button>
               )}
               {step === 3 && (
                 <button type="submit" className="submit-btn" disabled={loading}>
-                  {loading ? "⚔ Dispatching…" : "⚜ Swear the Oath"}
+                  {loading ? "Submitting…" : "⚜ Submit Application"}
                 </button>
               )}
             </div>
@@ -431,11 +501,13 @@ export default function CitizenRegistrationPage() {
       <footer className="citizen-footer">
         <div className="footer-left">
           <strong>RuralOps Platform</strong>
-          <span>Digital Rural Governance Infrastructure</span>
+          <span>District Rural Governance Infrastructure</span>
         </div>
         <div className="footer-center">© 2026 RuralOps — GOWTHAM CHIRIKI</div>
         <div className="footer-links">
-          <a href="#">Privacy</a><a href="#">Security</a><a href="#">Support</a>
+          <a href="#">Privacy</a>
+          <a href="#">Security</a>
+          <a href="#">Support</a>
         </div>
       </footer>
     </>
