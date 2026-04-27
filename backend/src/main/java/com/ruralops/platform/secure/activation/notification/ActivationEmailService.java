@@ -1,35 +1,31 @@
 package com.ruralops.platform.secure.activation.notification;
 
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 /**
- * Service responsible for sending account activation emails.
+ * Service responsible for sending account activation emails via Resend API.
  *
- * This class only handles email composition and delivery.
- * It does not perform validation, persistence, or business logic.
+ * Uses HTTP instead of SMTP (required for cloud platforms like Railway).
  */
 @Service
 public class ActivationEmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${resend.api.key}")
+    private String apiKey;
+
+    private final RestTemplate restTemplate = new RestTemplate();
 
     /**
-     * Temporary sender address for development/local environments.
-     *
-     * Will be moved to external configuration before production use.
+     * Resend default sender (works immediately).
+     * Later you can replace with your own domain email.
      */
-    private static final String FROM_EMAIL = "ruralops.official@gmail.com";
-
-    public ActivationEmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
+    private static final String FROM_EMAIL = "onboarding@resend.dev";
 
     /**
-     * Sends an activation email to the specified recipient.
-     *
-     * Validates required inputs before dispatching the message.
+     * Sends activation email using Resend API.
      */
     public void sendActivationEmail(
             String toEmail,
@@ -46,74 +42,83 @@ public class ActivationEmailService {
             throw new IllegalStateException("Activation key is missing");
         }
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(FROM_EMAIL);
-        message.setTo(toEmail);
-        message.setSubject("RuralOps | Account Activation Required");
-        message.setText(
-                buildEmailBody(
-                        displayName,
-                        accountType,
-                        accountId,
-                        activationKey
-                )
+        String htmlBody = buildEmailBody(
+                displayName,
+                accountType,
+                accountId,
+                activationKey
         );
 
-        mailSender.send(message);
+        String requestBody = """
+        {
+          "from": "%s",
+          "to": ["%s"],
+          "subject": "RuralOps | Account Activation Required",
+          "html": "%s"
+        }
+        """.formatted(
+                FROM_EMAIL,
+                toEmail,
+                escapeJson(htmlBody)
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + apiKey);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "https://api.resend.com/emails",
+                request,
+                String.class
+        );
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException("Failed to send email: " + response.getBody());
+        }
     }
 
     /* =======================
-       Email Content
+       Email Content (HTML)
        ======================= */
 
-    /**
-     * Builds the activation email body using a standard template.
-     *
-     * The format is fixed and follows an official communication style.
-     */
     private String buildEmailBody(
             String displayName,
             String accountType,
             String accountId,
             String activationKey
     ) {
-
         return """
-            %s,
+        <div style="font-family:Arial,sans-serif;line-height:1.6;">
+            <p>%s,</p>
 
-            Your RuralOps account has been successfully provisioned and is pending activation.
-            Please use the activation key below to complete your registration.
+            <p>Your RuralOps account has been successfully provisioned and is pending activation.</p>
 
-            ───────────────────────────────────────
-            ACCOUNT INFORMATION
-            ───────────────────────────────────────
-            Account Type  :  %s
-            Account ID    :  %s
+            <p><strong>Account Type:</strong> %s<br>
+               <strong>Account ID:</strong> %s</p>
 
-            ───────────────────────────────────────
-            ACTIVATION KEY
-            ───────────────────────────────────────
-            %s
+            <hr>
 
-            ───────────────────────────────────────
+            <p><strong>Activation Key:</strong></p>
+            <h2 style="letter-spacing:2px;">%s</h2>
 
-              •  This key is valid for 10 minutes only
-              •  It can be used once and will expire immediately after
-              •  A maximum of 3 activation requests are allowed per 24 hours
+            <p>
+            • Valid for 10 minutes<br>
+            • One-time use only<br>
+            • Max 3 requests per 24 hours
+            </p>
 
-            If you did not request this, you may safely ignore this message.
-            Your account will remain inactive unless this key is used.
+            <p>If you did not request this, ignore this email.</p>
 
-            Never share your activation key with anyone, including RuralOps staff.
+            <hr>
 
-            ───────────────────────────────────────
-            This is an automated message — please do not reply.
-
-            RuralOps  |  Digital Rural Governance Platform
-            Government Services Infrastructure
-            Support: ruralops.official@gmail.com
-            © 2026 RuralOps. All rights reserved.
-            """.formatted(
+            <p style="font-size:12px;color:gray;">
+            RuralOps — Digital Rural Governance Platform<br>
+            Do not reply to this email.
+            </p>
+        </div>
+        """.formatted(
                 safeDisplayName(displayName),
                 accountType,
                 accountId,
@@ -121,15 +126,24 @@ public class ActivationEmailService {
         );
     }
 
-    /**
-     * Returns a safe salutation for the email.
-     *
-     * Falls back to a generic greeting if no display name is provided.
-     */
+    /* =======================
+       Helpers
+       ======================= */
+
     private String safeDisplayName(String displayName) {
         if (displayName == null || displayName.isBlank()) {
             return "Dear User";
         }
         return "Dear " + displayName;
+    }
+
+    /**
+     * Escapes JSON-breaking characters.
+     */
+    private String escapeJson(String text) {
+        return text
+                .replace("\"", "\\\"")
+                .replace("\n", "")
+                .replace("\r", "");
     }
 }
