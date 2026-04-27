@@ -36,7 +36,7 @@ public interface CitizenAccountRepository
 
     boolean existsByPhoneNumber(String phoneNumber);
 
-    boolean existsByEmail(String email);
+    boolean existsByEmailIgnoreCase(String email);
 
     boolean existsByAadhaarNumber(String aadhaarNumber);
 

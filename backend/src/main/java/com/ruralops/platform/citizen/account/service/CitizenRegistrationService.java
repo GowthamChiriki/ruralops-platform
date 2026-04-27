@@ -79,7 +79,7 @@ public class CitizenRegistrationService {
            4. Citizen data uniqueness checks
            ====================================================== */
 
-        if (citizenAccountRepository.existsByEmail(request.getEmail())
+        if (citizenAccountRepository.existsByEmailIgnoreCase(request.getEmail())
                 || citizenAccountRepository.existsByAadhaarNumber(request.getAadhaarNumber())) {
 
             throw new InvalidRequestException(
