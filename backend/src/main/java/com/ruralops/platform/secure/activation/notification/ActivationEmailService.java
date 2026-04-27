@@ -6,9 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Service responsible for sending account activation emails via Resend API.
- *
- * Uses HTTP instead of SMTP (required for cloud platforms like Railway).
+ * Sends activation emails using Resend API.
  */
 @Service
 public class ActivationEmailService {
@@ -18,15 +16,9 @@ public class ActivationEmailService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    /**
-     * Resend default sender (works immediately).
-     * Later you can replace with your own domain email.
-     */
+    //  TEMP (works instantly)
     private static final String FROM_EMAIL = "onboarding@resend.dev";
 
-    /**
-     * Sends activation email using Resend API.
-     */
     public void sendActivationEmail(
             String toEmail,
             String displayName,
@@ -38,18 +30,15 @@ public class ActivationEmailService {
         if (toEmail == null || toEmail.isBlank()) {
             throw new IllegalStateException("Recipient email is missing");
         }
-        if (activationKey == null || activationKey.isBlank()) {
-            throw new IllegalStateException("Activation key is missing");
-        }
 
-        String htmlBody = buildEmailBody(
+        String html = buildEmailBody(
                 displayName,
                 accountType,
                 accountId,
                 activationKey
         );
 
-        String requestBody = """
+        String body = """
         {
           "from": "%s",
           "to": ["%s"],
@@ -59,14 +48,14 @@ public class ActivationEmailService {
         """.formatted(
                 FROM_EMAIL,
                 toEmail,
-                escapeJson(htmlBody)
+                escapeJson(html)
         );
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + apiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+        HttpEntity<String> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<String> response = restTemplate.postForEntity(
                 "https://api.resend.com/emails",
@@ -74,14 +63,16 @@ public class ActivationEmailService {
                 String.class
         );
 
+        //  DEBUG (keep for now)
+        System.out.println("=== EMAIL DEBUG ===");
+        System.out.println("TO: " + toEmail);
+        System.out.println("STATUS: " + response.getStatusCode());
+        System.out.println("BODY: " + response.getBody());
+
         if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new IllegalStateException("Failed to send email: " + response.getBody());
+            throw new RuntimeException("Email failed: " + response.getBody());
         }
     }
-
-    /* =======================
-       Email Content (HTML)
-       ======================= */
 
     private String buildEmailBody(
             String displayName,
@@ -126,10 +117,6 @@ public class ActivationEmailService {
         );
     }
 
-    /* =======================
-       Helpers
-       ======================= */
-
     private String safeDisplayName(String displayName) {
         if (displayName == null || displayName.isBlank()) {
             return "Dear User";
@@ -137,13 +124,10 @@ public class ActivationEmailService {
         return "Dear " + displayName;
     }
 
-    /**
-     * Escapes JSON-breaking characters.
-     */
     private String escapeJson(String text) {
         return text
                 .replace("\"", "\\\"")
-                .replace("\n", "")
+                .replace("\n", "<br>")
                 .replace("\r", "");
     }
 }
