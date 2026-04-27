@@ -15,6 +15,7 @@ import com.ruralops.platform.common.exception.ResourceNotFoundException;
 
 import com.ruralops.platform.secure.activation.domain.ActivationToken;
 import com.ruralops.platform.secure.activation.repository.ActivationTokenRepository;
+import com.ruralops.platform.secure.activation.service.ActivationTokenService;
 
 import com.ruralops.platform.secure.status.dto.StatusCheckResponse;
 
@@ -34,18 +35,23 @@ public class StatusCheckService {
     private final WorkerAccountRepository workerAccountRepository;
     private final ActivationTokenRepository tokenRepository;
 
+    // ✅ NEW
+    private final ActivationTokenService activationTokenService;
+
     public StatusCheckService(
             MaoAccountRepository maoAccountRepository,
             VaoAccountRepository vaoAccountRepository,
             CitizenAccountRepository citizenAccountRepository,
             WorkerAccountRepository workerAccountRepository,
-            ActivationTokenRepository tokenRepository
+            ActivationTokenRepository tokenRepository,
+            ActivationTokenService activationTokenService
     ) {
         this.maoAccountRepository = maoAccountRepository;
         this.vaoAccountRepository = vaoAccountRepository;
         this.citizenAccountRepository = citizenAccountRepository;
         this.workerAccountRepository = workerAccountRepository;
         this.tokenRepository = tokenRepository;
+        this.activationTokenService = activationTokenService;
     }
 
     public List<StatusCheckResponse> checkByPhoneNumber(String phoneNumber) {
@@ -147,7 +153,7 @@ public class StatusCheckService {
     }
 
     /* =======================
-       Activation Key Logic
+        UPDATED LOGIC HERE
        ======================= */
 
     private String getActivationKey(
@@ -160,14 +166,20 @@ public class StatusCheckService {
             return null;
         }
 
-        return tokenRepository
+        // Try existing token
+        var existingToken = tokenRepository
                 .findTopByAccountTypeAndAccountIdAndStatusOrderByCreatedAtDesc(
                         accountType,
                         accountId,
                         ActivationTokenStatus.ACTIVE
-                )
-                .map(ActivationToken::getRawToken)
-                .orElse(null);
+                );
+
+        if (existingToken.isPresent()) {
+            return existingToken.get().getRawToken();
+        }
+
+        // AUTO GENERATE if missing
+        return activationTokenService.generateToken(accountType, accountId);
     }
 
     /* =======================

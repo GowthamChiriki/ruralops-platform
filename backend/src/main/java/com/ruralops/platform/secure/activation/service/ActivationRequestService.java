@@ -47,7 +47,7 @@ public class ActivationRequestService {
         // Generate activation token (rate-limited internally)
         tokenService.generateToken(accountType, accountId);
 
-        // 🔥 No email sending
+        // No email sending
         // Activation key will be retrieved via status API
     }
 }
