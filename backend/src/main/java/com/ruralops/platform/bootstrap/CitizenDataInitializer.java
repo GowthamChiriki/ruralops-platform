@@ -63,7 +63,7 @@ public class CitizenDataInitializer implements ApplicationRunner {
                 );
 
         // Idempotency
-        if (citizenRepository.existsByUserId(user.getId())) return;
+        if (citizenRepository.existsByUser_Id(user.getId())) return;
 
         // Fetch village
         Village village = villageRepository.findById("PNP-2254")
