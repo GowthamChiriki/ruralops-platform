@@ -5,9 +5,12 @@ import com.ruralops.platform.common.exception.InvalidRequestException;
 import com.ruralops.platform.common.exception.ResourceNotFoundException;
 import com.ruralops.platform.secure.activation.domain.ActivationToken;
 import com.ruralops.platform.secure.activation.repository.ActivationTokenRepository;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class ActivationValidationService {
 
     private final ActivationTokenRepository tokenRepository;
@@ -38,11 +41,11 @@ public class ActivationValidationService {
         providedActivationKey = providedActivationKey.trim();
 
         /* =========================
-           Fetch ACTIVE token
+           Fetch LATEST ACTIVE token (FIXED)
            ========================= */
 
         ActivationToken token = tokenRepository
-                .findByAccountTypeAndAccountIdAndStatus(
+                .findTopByAccountTypeAndAccountIdAndStatusOrderByCreatedAtDesc(
                         accountType,
                         accountId,
                         ActivationTokenStatus.ACTIVE
