@@ -151,7 +151,7 @@ public class StatusCheckService {
     }
 
     /* =======================
-       FIXED ACTIVATION LOGIC
+       FINAL STABLE ACTIVATION LOGIC
        ======================= */
 
     private String getActivationKey(
@@ -164,6 +164,7 @@ public class StatusCheckService {
             return null;
         }
 
+        // 1. Fetch latest ACTIVE token
         var existingToken = tokenRepository
                 .findTopByAccountTypeAndAccountIdAndStatusOrderByCreatedAtDesc(
                         accountType,
@@ -175,19 +176,28 @@ public class StatusCheckService {
 
             ActivationToken token = existingToken.get();
 
-            // Sync expiration state
+            // Sync expiration
             token.expireIfNecessary();
 
             if (token.getStatus() == ActivationTokenStatus.ACTIVE) {
                 return token.getRawToken();
             }
 
-            // Persist expired state
             tokenRepository.save(token);
         }
 
-        // Generate ONLY if no valid active token exists
-        return activationTokenService.generateToken(accountType, accountId);
+        // 2. Generate new token
+        activationTokenService.generateToken(accountType, accountId);
+
+        // 3. ALWAYS fetch from DB (source of truth)
+        return tokenRepository
+                .findTopByAccountTypeAndAccountIdAndStatusOrderByCreatedAtDesc(
+                        accountType,
+                        accountId,
+                        ActivationTokenStatus.ACTIVE
+                )
+                .map(ActivationToken::getRawToken)
+                .orElse(null);
     }
 
     /* =======================
