@@ -34,8 +34,6 @@ public class StatusCheckService {
     private final CitizenAccountRepository citizenAccountRepository;
     private final WorkerAccountRepository workerAccountRepository;
     private final ActivationTokenRepository tokenRepository;
-
-    // ✅ NEW
     private final ActivationTokenService activationTokenService;
 
     public StatusCheckService(
@@ -153,7 +151,7 @@ public class StatusCheckService {
     }
 
     /* =======================
-        UPDATED LOGIC HERE
+       FIXED ACTIVATION LOGIC
        ======================= */
 
     private String getActivationKey(
@@ -166,7 +164,6 @@ public class StatusCheckService {
             return null;
         }
 
-        // Try existing token
         var existingToken = tokenRepository
                 .findTopByAccountTypeAndAccountIdAndStatusOrderByCreatedAtDesc(
                         accountType,
@@ -175,10 +172,21 @@ public class StatusCheckService {
                 );
 
         if (existingToken.isPresent()) {
-            return existingToken.get().getRawToken();
+
+            ActivationToken token = existingToken.get();
+
+            // Sync expiration state
+            token.expireIfNecessary();
+
+            if (token.getStatus() == ActivationTokenStatus.ACTIVE) {
+                return token.getRawToken();
+            }
+
+            // Persist expired state
+            tokenRepository.save(token);
         }
 
-        // AUTO GENERATE if missing
+        // Generate ONLY if no valid active token exists
         return activationTokenService.generateToken(accountType, accountId);
     }
 
