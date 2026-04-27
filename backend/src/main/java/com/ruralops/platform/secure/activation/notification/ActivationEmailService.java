@@ -5,8 +5,12 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
- * Sends activation emails using Resend API.
+ * Sends activation emails using Resend API (stable version).
  */
 @Service
 public class ActivationEmailService {
@@ -16,7 +20,7 @@ public class ActivationEmailService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    //  TEMP (works instantly)
+    // Works in free/test mode
     private static final String FROM_EMAIL = "onboarding@resend.dev";
 
     public void sendActivationEmail(
@@ -38,41 +42,45 @@ public class ActivationEmailService {
                 activationKey
         );
 
-        String body = """
-        {
-          "from": "%s",
-          "to": ["%s"],
-          "subject": "RuralOps | Account Activation Required",
-          "html": "%s"
-        }
-        """.formatted(
-                FROM_EMAIL,
-                toEmail,
-                escapeJson(html)
-        );
+        // ✅ SAFE JSON (no manual string building)
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("from", FROM_EMAIL);
+        payload.put("to", List.of(toEmail));
+        payload.put("subject", "RuralOps | Account Activation Required");
+        payload.put("html", html);
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + apiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<String> request = new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
 
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                "https://api.resend.com/emails",
-                request,
-                String.class
-        );
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    "https://api.resend.com/emails",
+                    request,
+                    String.class
+            );
 
-        //  DEBUG (keep for now)
-        System.out.println("=== EMAIL DEBUG ===");
-        System.out.println("TO: " + toEmail);
-        System.out.println("STATUS: " + response.getStatusCode());
-        System.out.println("BODY: " + response.getBody());
+            // 🔍 DEBUG (keep until fully working)
+            System.out.println("=== EMAIL DEBUG ===");
+            System.out.println("TO: " + toEmail);
+            System.out.println("STATUS: " + response.getStatusCode());
+            System.out.println("BODY: " + response.getBody());
 
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("Email failed: " + response.getBody());
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Email failed: " + response.getBody());
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace(); // 🔥 this will show exact issue in Railway logs
+            throw new RuntimeException("Email sending failed", e);
         }
     }
+
+    /* =======================
+       Email Content
+       ======================= */
 
     private String buildEmailBody(
             String displayName,
@@ -122,12 +130,5 @@ public class ActivationEmailService {
             return "Dear User";
         }
         return "Dear " + displayName;
-    }
-
-    private String escapeJson(String text) {
-        return text
-                .replace("\"", "\\\"")
-                .replace("\n", "<br>")
-                .replace("\r", "");
     }
 }
