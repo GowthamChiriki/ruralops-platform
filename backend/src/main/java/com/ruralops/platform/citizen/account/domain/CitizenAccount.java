@@ -5,23 +5,10 @@ import com.ruralops.platform.common.enums.AccountStatus;
 import com.ruralops.platform.governance.domain.Village;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Represents a citizen account within the system.
- *
- * Lifecycle:
- * PENDING_APPROVAL  → Awaiting VAO decision
- * PENDING_ACTIVATION → Approved, waiting for activation
- * ACTIVE → Fully activated
- * REJECTED → Approval denied
- *
- * Identity rule:
- * Each CitizenAccount belongs to exactly one User.
- */
 @Entity
 @Table(
         name = "citizen_accounts",
@@ -44,18 +31,9 @@ public class CitizenAccount {
     @Column(nullable = false, updatable = false)
     private UUID id;
 
-    /**
-     * Public citizen identifier.
-     * Generated after VAO approval.
-     */
     @Column(name = "citizen_id", length = 30, unique = true)
     private String citizenId;
 
-    /**
-     * Core authentication identity.
-     *
-     * JWT userId → users.id → citizen_accounts.user_id
-     */
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
@@ -83,7 +61,6 @@ public class CitizenAccount {
     @Column(name = "phone_number", nullable = false, length = 15)
     private String phoneNumber;
 
-
     @Column(name = "email", nullable = false, length = 150)
     private String email;
 
@@ -99,13 +76,6 @@ public class CitizenAccount {
     private String approvedByVaoId;
 
     /* ======================================================
-       Authentication
-       ====================================================== */
-
-    @Column(name = "password_hash")
-    private String passwordHash;
-
-    /* ======================================================
        Lifecycle & audit
        ====================================================== */
 
@@ -119,13 +89,8 @@ public class CitizenAccount {
     @Column(name = "approved_at")
     private Instant approvedAt;
 
-    protected CitizenAccount() {
-        // JPA only
-    }
+    protected CitizenAccount() {}
 
-    /**
-     * Constructor used during citizen registration.
-     */
     public CitizenAccount(
             User user,
             String fullName,
@@ -189,7 +154,7 @@ public class CitizenAccount {
         this.status = AccountStatus.REJECTED;
     }
 
-    public void activate(String passwordHash) {
+    public void activate() {
 
         if (status != AccountStatus.PENDING_ACTIVATION) {
             throw new IllegalStateException(
@@ -197,7 +162,6 @@ public class CitizenAccount {
             );
         }
 
-        this.passwordHash = passwordHash;
         this.status = AccountStatus.ACTIVE;
     }
 
@@ -239,7 +203,6 @@ public class CitizenAccount {
     public AccountStatus getStatus() { return status; }
     public Instant getRegisteredAt() { return registeredAt; }
     public Instant getApprovedAt() { return approvedAt; }
-    public String getPasswordHash() { return passwordHash; }
 
     /* ======================================================
        Helpers

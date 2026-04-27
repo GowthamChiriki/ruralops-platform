@@ -14,6 +14,7 @@ import java.util.UUID;
         }
 )
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -47,67 +48,23 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    /* =====================================================
-       JPA CONSTRUCTOR
-       ===================================================== */
-
-    public User() {
-        // JPA only
-    }
-
-    /* =====================================================
-       DOMAIN CONSTRUCTOR
-       ===================================================== */
+    public User() {}
 
     public User(String phone, String passwordHash, AccountStatus status) {
-        this.phone = phone;
+        this.phone = normalize(phone);
         this.passwordHash = passwordHash;
         this.status = status;
         this.createdAt = Instant.now();
     }
 
-    /* =====================================================
-       GETTERS
-       ===================================================== */
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public AccountStatus getStatus() {
-        return status;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    /* =====================================================
-       DOMAIN BEHAVIOR
-       ===================================================== */
+    public UUID getId() { return id; }
+    public String getPhone() { return phone; }
+    public String getPasswordHash() { return passwordHash; }
+    public AccountStatus getStatus() { return status; }
+    public Instant getCreatedAt() { return createdAt; }
 
     public void activate() {
         this.status = AccountStatus.ACTIVE;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public void setStatus(AccountStatus status) {
-        this.status = status;
     }
 
     public void suspend() {
@@ -118,11 +75,19 @@ public class User {
         return this.status == AccountStatus.ACTIVE;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
+    public void setPhone(String phone) {
+        this.phone = normalize(phone);
+    }
+
+    public void setStatus(AccountStatus status) {
+        this.status = status;
+    }
+
+    private String normalize(String value) {
+        return value == null ? null : value.trim();
     }
 }
