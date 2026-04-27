@@ -47,7 +47,6 @@ public class ActivationTokenService {
      * - Any existing ACTIVE tokens are expired before issuing a new one
      *
      * @return Raw activation key.
-     *         Returned once and never stored in plain text.
      */
     public String generateToken(String accountType, String accountId) {
 
@@ -62,14 +61,13 @@ public class ActivationTokenService {
                         windowStart
                 );
 
-        // Rate limiting
         if (attempts >= activationPolicy.maxActivationRequestsPerWindow()) {
             throw new GovernanceViolationException(
                     "Activation key request limit exceeded. Please try again later."
             );
         }
 
-        // 2. Expire any currently ACTIVE tokens for this account
+        // 2. Expire any currently ACTIVE tokens
         List<ActivationToken> activeTokens =
                 tokenRepository.findAllByAccountTypeAndAccountIdAndStatus(
                         accountType,
@@ -92,10 +90,12 @@ public class ActivationTokenService {
         Instant expiresAt = Instant.now()
                 .plus(activationPolicy.activationTokenValidity());
 
+        // UPDATED: store rawKey as well
         ActivationToken newToken = new ActivationToken(
                 accountType,
                 accountId,
                 tokenHash,
+                rawKey,
                 expiresAt
         );
 
@@ -110,20 +110,15 @@ public class ActivationTokenService {
 
     /**
      * Generates a 128-bit secure random value.
-     *
-     * Returned as uppercase hexadecimal string.
      */
     private String generateSecureKey() {
-        byte[] bytes = new byte[16]; // 16 bytes * 8 = 128 bits.
+        byte[] bytes = new byte[16];
         secureRandom.nextBytes(bytes);
         return HexFormat.of().formatHex(bytes).toUpperCase();
     }
 
     /**
      * Temporary hashing method.
-     *
-     * Must match the hashing logic used during validation.
-     * Should be replaced with a strong algorithm (e.g., BCrypt or Argon2).
      */
     private String hash(String value) {
         if (value == null) return null;

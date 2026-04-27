@@ -6,67 +6,34 @@ import com.ruralops.platform.common.enums.AccountStatus;
  * Unified response for account status check.
  *
  * Represents ONE account belonging to a phone number.
- * The API may return multiple responses when a user
- * has multiple roles (Citizen, Worker, VAO, etc).
- *
- * Example API response:
- *
- * [
- *   { accountType: "CITIZEN", ... },
- *   { accountType: "WORKER", ... }
- * ]
- *
- * READ-ONLY
- * IMMUTABLE
- * STABLE API CONTRACT
  */
 public class StatusCheckResponse {
 
-    /**
-     * Account type.
-     * Example: MAO, VAO, CITIZEN, WORKER
-     */
     private final String accountType;
-
-    /**
-     * Public account identifier.
-     * Example: RLOM-MDG-3128-A7F3
-     */
     private final String accountId;
-
-    /**
-     * Current lifecycle status.
-     */
     private final AccountStatus status;
-
-    /**
-     * Whether the account is eligible for activation.
-     */
     private final boolean canActivate;
+    private final String nextAction;
 
     /**
-     * Next allowed action for the user.
-     *
-     * Examples:
-     * - REQUEST_ACTIVATION
-     * - LOGIN
-     * - WAIT_FOR_APPROVAL
-     * - CONTACT_SUPPORT
+     * NEW: Activation key (only present when applicable)
      */
-    private final String nextAction;
+    private final String activationKey;
 
     public StatusCheckResponse(
             String accountType,
             String accountId,
             AccountStatus status,
             boolean canActivate,
-            String nextAction
+            String nextAction,
+            String activationKey
     ) {
         this.accountType = accountType;
         this.accountId = accountId;
         this.status = status;
         this.canActivate = canActivate;
         this.nextAction = nextAction;
+        this.activationKey = activationKey;
     }
 
     public String getAccountType() {
@@ -87,5 +54,12 @@ public class StatusCheckResponse {
 
     public String getNextAction() {
         return nextAction;
+    }
+
+    /**
+     * NEW getter
+     */
+    public String getActivationKey() {
+        return activationKey;
     }
 }

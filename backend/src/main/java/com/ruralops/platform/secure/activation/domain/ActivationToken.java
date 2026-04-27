@@ -9,7 +9,10 @@ import java.util.UUID;
 /**
  * Represents an activation token issued for an account.
  *
- * Stores only the hashed token value.
+ * Stores:
+ * - hashed token (for validation)
+ * - raw token (for controlled retrieval via API)
+ *
  * Manages token lifecycle (ACTIVE, USED, EXPIRED).
  */
 @Entity
@@ -28,79 +31,56 @@ import java.util.UUID;
 )
 public class ActivationToken {
 
-    /**
-     * Internal database identifier.
-     *
-     * Generated automatically.
-     * Never exposed outside the system.
-     */
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    /**
-     * Account category (MAO, VAO, CITIZEN, WORKER, DAO, etc.).
-     */
     @Column(name = "account_type", nullable = false, length = 20)
     private String accountType;
 
-    /**
-     * Public account identifier.
-     *
-     * Example: RLOM-MDG-3128-A7F3
-     */
     @Column(name = "account_id", nullable = false, length = 50)
     private String accountId;
 
     /**
-     * Hashed activation key.
-     *
-     * The raw token value is never stored.
+     * Hashed activation key (used for validation)
      */
     @Column(name = "token_hash", nullable = false, length = 128)
     private String tokenHash;
 
     /**
-     * Time when the token becomes invalid.
+     * NEW: Raw activation key (temporary storage)
      */
+    @Column(name = "raw_token", length = 64)
+    private String rawToken;
+
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
-    /**
-     * Current lifecycle state of the token.
-     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private ActivationTokenStatus status;
 
-    /**
-     * Timestamp when the token was created.
-     */
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    /**
-     * Default constructor required by JPA.
-     */
     protected ActivationToken() {
         // For JPA
     }
 
     /**
-     * Creates a new activation token.
-     *
-     * Intended to be used only by the service layer.
-     * New tokens start in ACTIVE state.
+     * UPDATED CONSTRUCTOR
      */
     public ActivationToken(
             String accountType,
             String accountId,
             String tokenHash,
+            String rawToken,
             Instant expiresAt
     ) {
         this.accountType = accountType;
         this.accountId = accountId;
         this.tokenHash = tokenHash;
+        this.rawToken = rawToken;
         this.expiresAt = expiresAt;
         this.status = ActivationTokenStatus.ACTIVE;
         this.createdAt = Instant.now();
@@ -126,6 +106,13 @@ public class ActivationToken {
         return tokenHash;
     }
 
+    /**
+     * NEW GETTER
+     */
+    public String getRawToken() {
+        return rawToken;
+    }
+
     public Instant getExpiresAt() {
         return expiresAt;
     }
@@ -142,29 +129,14 @@ public class ActivationToken {
        Domain behavior
        ======================= */
 
-    /**
-     * Checks whether the token has passed its expiration time.
-     */
     public boolean isExpired() {
         return Instant.now().isAfter(expiresAt);
     }
 
-    /**
-     * Returns true if the token is valid for activation.
-     *
-     * A token is usable only when:
-     * - Status is ACTIVE
-     * - It has not expired
-     */
     public boolean isActive() {
         return status == ActivationTokenStatus.ACTIVE && !isExpired();
     }
 
-    /**
-     * Marks the token as USED.
-     *
-     * Allowed only when the current state is ACTIVE.
-     */
     public void markUsed() {
         if (status != ActivationTokenStatus.ACTIVE) {
             throw new IllegalStateException(
@@ -172,29 +144,27 @@ public class ActivationToken {
             );
         }
         this.status = ActivationTokenStatus.USED;
+
+        // Optional: clear raw token after use
+        this.rawToken = null;
     }
 
-    /**
-     * Marks the token as EXPIRED.
-     *
-     * Safe to call multiple times.
-     * Tokens already marked as USED remain unchanged.
-     */
     public void markExpired() {
         if (status == ActivationTokenStatus.USED) {
             return;
         }
         this.status = ActivationTokenStatus.EXPIRED;
+
+        // Optional: clear raw token after expiry
+        this.rawToken = null;
     }
 
-    /**
-     * Updates the state if the token has expired by time.
-     *
-     * Should be called before performing validation checks.
-     */
     public void expireIfNecessary() {
         if (status == ActivationTokenStatus.ACTIVE && isExpired()) {
             this.status = ActivationTokenStatus.EXPIRED;
+
+            // Optional cleanup
+            this.rawToken = null;
         }
     }
 }

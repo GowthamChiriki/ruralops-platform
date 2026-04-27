@@ -10,7 +10,12 @@ import com.ruralops.platform.worker.domain.WorkerAccount;
 import com.ruralops.platform.worker.repository.WorkerAccountRepository;
 
 import com.ruralops.platform.common.enums.AccountStatus;
+import com.ruralops.platform.common.enums.ActivationTokenStatus;
 import com.ruralops.platform.common.exception.ResourceNotFoundException;
+
+import com.ruralops.platform.secure.activation.domain.ActivationToken;
+import com.ruralops.platform.secure.activation.repository.ActivationTokenRepository;
+
 import com.ruralops.platform.secure.status.dto.StatusCheckResponse;
 
 import org.springframework.stereotype.Service;
@@ -27,58 +32,41 @@ public class StatusCheckService {
     private final VaoAccountRepository vaoAccountRepository;
     private final CitizenAccountRepository citizenAccountRepository;
     private final WorkerAccountRepository workerAccountRepository;
+    private final ActivationTokenRepository tokenRepository;
 
     public StatusCheckService(
             MaoAccountRepository maoAccountRepository,
             VaoAccountRepository vaoAccountRepository,
             CitizenAccountRepository citizenAccountRepository,
-            WorkerAccountRepository workerAccountRepository
+            WorkerAccountRepository workerAccountRepository,
+            ActivationTokenRepository tokenRepository
     ) {
         this.maoAccountRepository = maoAccountRepository;
         this.vaoAccountRepository = vaoAccountRepository;
         this.citizenAccountRepository = citizenAccountRepository;
         this.workerAccountRepository = workerAccountRepository;
+        this.tokenRepository = tokenRepository;
     }
 
     public List<StatusCheckResponse> checkByPhoneNumber(String phoneNumber) {
 
         List<StatusCheckResponse> responses = new ArrayList<>();
 
-        /* =======================
-           Check MAO
-           ======================= */
-
         maoAccountRepository
                 .findByPhoneNumber(phoneNumber)
-                .ifPresent(mao ->
-                        responses.add(mapMaoToResponse(mao)));
-
-        /* =======================
-           Check VAO
-           ======================= */
+                .ifPresent(mao -> responses.add(mapMaoToResponse(mao)));
 
         vaoAccountRepository
                 .findByPhoneNumber(phoneNumber)
-                .ifPresent(vao ->
-                        responses.add(mapVaoToResponse(vao)));
-
-        /* =======================
-           Check Worker
-           ======================= */
+                .ifPresent(vao -> responses.add(mapVaoToResponse(vao)));
 
         workerAccountRepository
                 .findByPhoneNumber(phoneNumber)
-                .ifPresent(worker ->
-                        responses.add(mapWorkerToResponse(worker)));
-
-        /* =======================
-           Check Citizen
-           ======================= */
+                .ifPresent(worker -> responses.add(mapWorkerToResponse(worker)));
 
         citizenAccountRepository
                 .findByPhoneNumber(phoneNumber)
-                .ifPresent(citizen ->
-                        responses.add(mapCitizenToResponse(citizen)));
+                .ifPresent(citizen -> responses.add(mapCitizenToResponse(citizen)));
 
         if (responses.isEmpty()) {
             throw new ResourceNotFoundException(
@@ -102,7 +90,8 @@ public class StatusCheckService {
                 mao.getMaoId(),
                 status,
                 status == AccountStatus.PENDING_ACTIVATION,
-                nextActionFor(status)
+                nextActionFor(status),
+                getActivationKey("MAO", mao.getMaoId(), status)
         );
     }
 
@@ -115,7 +104,8 @@ public class StatusCheckService {
                 vao.getVaoId(),
                 status,
                 status == AccountStatus.PENDING_ACTIVATION,
-                nextActionFor(status)
+                nextActionFor(status),
+                getActivationKey("VAO", vao.getVaoId(), status)
         );
     }
 
@@ -128,7 +118,8 @@ public class StatusCheckService {
                 worker.getWorkerId(),
                 status,
                 status == AccountStatus.PENDING_ACTIVATION,
-                nextActionFor(status)
+                nextActionFor(status),
+                getActivationKey("WORKER", worker.getWorkerId(), status)
         );
     }
 
@@ -150,8 +141,33 @@ public class StatusCheckService {
                 citizen.getCitizenId(),
                 status,
                 status == AccountStatus.PENDING_ACTIVATION,
-                nextActionForCitizen(status)
+                nextActionForCitizen(status),
+                getActivationKey("CITIZEN", citizen.getCitizenId(), status)
         );
+    }
+
+    /* =======================
+       Activation Key Logic
+       ======================= */
+
+    private String getActivationKey(
+            String accountType,
+            String accountId,
+            AccountStatus status
+    ) {
+
+        if (status != AccountStatus.PENDING_ACTIVATION) {
+            return null;
+        }
+
+        return tokenRepository
+                .findTopByAccountTypeAndAccountIdAndStatusOrderByCreatedAtDesc(
+                        accountType,
+                        accountId,
+                        ActivationTokenStatus.ACTIVE
+                )
+                .map(ActivationToken::getRawToken)
+                .orElse(null);
     }
 
     /* =======================
@@ -159,7 +175,6 @@ public class StatusCheckService {
        ======================= */
 
     private String nextActionFor(AccountStatus status) {
-
         return switch (status) {
             case PENDING_ACTIVATION -> "REQUEST_ACTIVATION";
             case ACTIVE -> "LOGIN";
@@ -169,7 +184,6 @@ public class StatusCheckService {
     }
 
     private String nextActionForCitizen(AccountStatus status) {
-
         return switch (status) {
             case PENDING_APPROVAL -> "WAIT_FOR_APPROVAL";
             case PENDING_ACTIVATION -> "REQUEST_ACTIVATION";
