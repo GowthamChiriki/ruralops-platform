@@ -11,37 +11,16 @@ const ROLE_CONFIG = {
   MAO:     { label: "Mandal Admin Officer",  icon: "🏛️" },
 };
 
-const ANNOUNCEMENTS = [
-  "New welfare scheme registrations open for Kharif season 2026",
-  "VAO verification turnaround reduced to 48 hours across all mandals",
-  "RuralOps now serving 40,000+ villages nationwide",
-  "Field Workers: Updated route assignments available in your dashboard",
-  "RuralOps recognised by the State Digital Governance Council — 2026",
-  "Mobile access enabled — manage your operations from any device",
-];
-
 const QUICK_LINKS = [
-  { label: "New Registration",   to: "/citizen/register",   icon: "📝", sub: "Register as a citizen"     },
-  { label: "Check Status",       to: "/citizen/status",     icon: "🔍", sub: "Track your application"    },
-  { label: "Activate Account",   to: "/activate-account",   icon: "🔑", sub: "Enter your activation key"  },
-  { label: "Request Access Key", to: "/activation/request", icon: "✉️", sub: "Request a new key"          },
+  { label: "New Registration",   to: "/citizen/register",   icon: "📝", sub: "Register as a citizen"    },
+  { label: "Check Status",       to: "/citizen/status",     icon: "🔍", sub: "Track your application"   },
+  { label: "Activate Account",   to: "/activate-account",   icon: "🔑", sub: "Enter your activation key" },
+  { label: "Request Access Key", to: "/activation/request", icon: "✉️", sub: "Request a new key"         },
 ];
 
-const TICKER_ITEMS = [
-  { region: "PEDANANDI PALLI", status: "ok",   text: "12 new citizen registrations today"       },
-  { region: "KALIGOTLA",       status: "warn", text: "VAO verification: 3 applications pending" },
-  { region: "TARUVA",          status: "ok",   text: "Welfare disbursement: ₹48,000 processed"  },
-  { region: "MUSHIDIPALLE",    status: "info", text: "Land records updated in central registry" },
-  { region: "SAMMEDA",         status: "ok",   text: "8 applications approved this morning"     },
-  { region: "GARISINGI",       status: "warn", text: "2 applications require re-submission"     },
-  { region: "DEVARAPALLE",     status: "ok",   text: "Census synchronisation: 99.2% complete"   },
-  { region: "NAGAYYAPETA",     status: "info", text: "Scheme enrollment open until month-end"   },
-];
-
-/* ── Theme hook — shares key with LandingPage ── */
 function useTheme() {
   const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined") return false;
+    if (typeof window === "undefined") return true;
     const s = localStorage.getItem("ruralops-theme");
     if (s) return s === "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -98,31 +77,22 @@ export default function LoginPage() {
   const [showPw,     setShowPw]     = useState(false);
   const [loading,    setLoading]    = useState(false);
   const [toasts,     setToasts]     = useState([]);
-  const [noticeIdx,  setNoticeIdx]  = useState(0);
-  const [noticeVis,  setNoticeVis]  = useState(true);
   const [role,       setRole]       = useState(null);
   const [phoneErr,   setPhoneErr]   = useState("");
   const [passErr,    setPassErr]    = useState("");
-
-  useEffect(() => {
-    const t = setInterval(() => {
-      setNoticeVis(false);
-      setTimeout(() => { setNoticeIdx(i => (i + 1) % ANNOUNCEMENTS.length); setNoticeVis(true); }, 300);
-    }, 5000);
-    return () => clearInterval(t);
-  }, []);
 
   const addToast = (type, ttl, sub) => {
     const id = Date.now();
     setToasts(p => [...p, { id, type, ttl, sub, out: false }]);
     setTimeout(() => {
       setToasts(p => p.map(t => t.id === id ? { ...t, out: true } : t));
-      setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 260);
-    }, 5000);
+      setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 320);
+    }, 2500); // ← reduced from 5000ms to 2500ms
   };
+
   const dismissToast = id => {
     setToasts(p => p.map(t => t.id === id ? { ...t, out: true } : t));
-    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 260);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 320);
   };
 
   const vPhone = v => !v ? "Phone number is required." : !/^[6-9]\d{9}$/.test(v) ? "Enter a valid 10-digit number starting with 6–9." : "";
@@ -132,7 +102,7 @@ export default function LoginPage() {
     e.preventDefault();
     const pe = vPhone(phone), we = vPass(password);
     setPhoneErr(pe); setPassErr(we);
-    if (pe || we) { addToast("error", "Validation Failed", "Please correct the errors below."); return; }
+    if (pe || we) { addToast("error", "Validation Failed", "Please correct the highlighted fields."); return; }
     setLoading(true);
     addToast("info", "Authenticating…", "Verifying your credentials with the server.");
     try {
@@ -146,7 +116,7 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data?.message || "Invalid credentials");
       saveSession(data); startTokenRefresh();
       setRole(ROLE_CONFIG[data.activeRole]);
-      addToast("success", "Authentication Successful", "Redirecting to your dashboard…");
+      addToast("success", "Welcome back!", "Redirecting to your dashboard…");
       setTimeout(() => {
         switch (data.activeRole) {
           case "CITIZEN": navigate("/citizen/dashboard"); break;
@@ -159,510 +129,581 @@ export default function LoginPage() {
     } catch (err) {
       const msg = err.message || "Login failed";
       addToast("error", "Authentication Failed",
-        msg.toLowerCase().includes("credentials") ? "The phone number or password you entered is incorrect." : msg);
+        msg.toLowerCase().includes("credentials") ? "The phone number or password is incorrect." : msg);
     } finally { setLoading(false); }
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-        /* ── LIGHT TOKENS — identical to LandingPage ── */
         :root, [data-theme="light"] {
-          --bg:          #f4f5f7;
-          --bg-card:     #ffffff;
-          --bg-1:        #f9fafb;
-          --bg-elevated: #f0f2f5;
-          --border:      #e5e7eb;
-          --border-med:  #d1d5db;
-          --border-str:  #9ca3af;
-          --text-1:      #111827;
-          --text-2:      #374151;
-          --text-3:      #6b7280;
-          --text-4:      #9ca3af;
-          --text-inv:    #ffffff;
-          --accent:      #1a1d23;
-          --accent-mid:  #252830;
-          --accent-sub:  rgba(26,29,35,0.06);
-          --green:       #10b981;
-          --green-sub:   rgba(16,185,129,0.08);
-          --green-brd:   rgba(16,185,129,0.2);
-          --green-text:  #059669;
-          --warn:        #f59e0b;
-          --danger:      #ef4444;
-          --danger-sub:  rgba(239,68,68,0.08);
-          --info:        #3b82f6;
-          --info-sub:    rgba(59,130,246,0.08);
-          --sh-sm:  0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
-          --sh-md:  0 4px 6px rgba(0,0,0,0.05),0 2px 4px rgba(0,0,0,0.04);
-          --sh-lg:  0 10px 15px rgba(0,0,0,0.07),0 4px 6px rgba(0,0,0,0.05);
-          --sh-xl:  0 20px 25px rgba(0,0,0,0.08);
-          --r-xs:3px; --r-sm:6px; --r-md:8px; --r-lg:12px; --r-xl:16px; --r-pill:9999px;
-          --font:      'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
-          --font-mono: 'Geist Mono', 'SF Mono', monospace;
-          --ease:      cubic-bezier(0.16,1,0.3,1);
+          --bg:           #f0ede8;
+          --bg-card:      #faf9f7;
+          --bg-glass:     rgba(255,255,255,0.72);
+          --bg-glass2:    rgba(255,255,255,0.45);
+          --bg-inset:     #ece9e3;
+          --bg-hover:     rgba(0,0,0,0.025);
+          --border:       rgba(0,0,0,0.08);
+          --border-med:   rgba(0,0,0,0.13);
+          --border-str:   rgba(0,0,0,0.22);
+          --text-1:       #1a1714;
+          --text-2:       #3d3830;
+          --text-3:       #5a5349;
+          --text-4:       #8a8278;
+          --text-inv:     #faf9f7;
+          --accent:       #1a1714;
+          --accent-h:     #2e2924;
+          --accent-sub:   rgba(26,23,20,0.06);
+          --green:        #2d9e6b;
+          --green-sub:    rgba(45,158,107,0.09);
+          --green-brd:    rgba(45,158,107,0.22);
+          --green-text:   #1e7a52;
+          --amber:        #c97c1a;
+          --amber-sub:    rgba(201,124,26,0.1);
+          --red:          #c94040;
+          --red-sub:      rgba(201,64,64,0.09);
+          --red-brd:      rgba(201,64,64,0.22);
+          --blue:         #3b7dd8;
+          --blue-sub:     rgba(59,125,216,0.09);
+          --blue-brd:     rgba(59,125,216,0.22);
+          --sh-xs: 0 1px 2px rgba(0,0,0,0.04);
+          --sh-sm: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+          --sh-md: 0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+          --sh-lg: 0 20px 48px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.06);
+          --sh-xl: 0 32px 64px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.07);
+          --glow-green: 0 0 24px rgba(45,158,107,0.18);
+          --r-xs:3px; --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:20px; --r-pill:9999px;
+          --font:      'Outfit', system-ui, sans-serif;
+          --font-serif:'DM Serif Display', Georgia, serif;
+          --font-mono: 'JetBrains Mono', monospace;
+          --ease: cubic-bezier(0.22,1,0.36,1);
+          --ease2: cubic-bezier(0.16,1,0.3,1);
         }
 
-        /* ── DARK TOKENS — identical to LandingPage ── */
         [data-theme="dark"] {
-          --bg:          #0a0a0a;
-          --bg-card:     #161616;
-          --bg-1:        #141414;
-          --bg-elevated: #1e1e1e;
-          --border:      rgba(255,255,255,0.08);
-          --border-med:  rgba(255,255,255,0.13);
-          --border-str:  rgba(255,255,255,0.22);
-          --text-1:      #f5f5f5;
-          --text-2:      #a3a3a3;
-          --text-3:      #525252;
-          --text-4:      #303030;
-          --text-inv:    #0a0a0a;
-          --accent:      #f5f5f5;
-          --accent-mid:  #e5e5e5;
-          --accent-sub:  rgba(245,245,245,0.06);
-          --green:       #22c55e;
-          --green-sub:   rgba(34,197,94,0.08);
-          --green-brd:   rgba(34,197,94,0.18);
-          --green-text:  #22c55e;
-          --warn:        #eab308;
-          --danger:      #ef4444;
-          --danger-sub:  rgba(239,68,68,0.08);
-          --info:        #a3a3a3;
-          --info-sub:    rgba(163,163,163,0.08);
-          --sh-sm:  0 1px 3px rgba(0,0,0,0.7),0 1px 2px rgba(0,0,0,0.6);
-          --sh-md:  0 4px 6px rgba(0,0,0,0.7),0 2px 4px rgba(0,0,0,0.6);
-          --sh-lg:  0 10px 15px rgba(0,0,0,0.8),0 4px 6px rgba(0,0,0,0.6);
-          --sh-xl:  0 20px 25px rgba(0,0,0,0.85);
+          --bg:           #0d0c0b;
+          --bg-card:      #141210;
+          --bg-glass:     rgba(22,19,16,0.85);
+          --bg-glass2:    rgba(30,26,22,0.6);
+          --bg-inset:     #1a1714;
+          --bg-hover:     rgba(255,255,255,0.035);
+          --border:       rgba(255,255,255,0.07);
+          --border-med:   rgba(255,255,255,0.12);
+          --border-str:   rgba(255,255,255,0.2);
+          --text-1:       #f0ede8;
+          --text-2:       #d4cec8;
+          --text-3:       #a89f96;
+          --text-4:       #706860;
+          --text-inv:     #0d0c0b;
+          --accent:       #f0ede8;
+          --accent-h:     #ffffff;
+          --accent-sub:   rgba(240,237,232,0.06);
+          --green:        #34c97c;
+          --green-sub:    rgba(52,201,124,0.08);
+          --green-brd:    rgba(52,201,124,0.18);
+          --green-text:   #34c97c;
+          --amber:        #e8942a;
+          --amber-sub:    rgba(232,148,42,0.1);
+          --red:          #e05555;
+          --red-sub:      rgba(224,85,85,0.09);
+          --red-brd:      rgba(224,85,85,0.22);
+          --blue:         #5b9af0;
+          --blue-sub:     rgba(91,154,240,0.09);
+          --blue-brd:     rgba(91,154,240,0.22);
+          --sh-xs: 0 1px 2px rgba(0,0,0,0.5);
+          --sh-sm: 0 2px 8px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
+          --sh-md: 0 8px 24px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.4);
+          --sh-lg: 0 20px 48px rgba(0,0,0,0.65), 0 4px 12px rgba(0,0,0,0.45);
+          --sh-xl: 0 32px 64px rgba(0,0,0,0.75), 0 8px 20px rgba(0,0,0,0.5);
+          --glow-green: 0 0 32px rgba(52,201,124,0.2);
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* ── PAGE ── */
-        .lp-page {
+        .ro-page {
           font-family: var(--font);
           background: var(--bg);
           color: var(--text-1);
           min-height: 100vh;
           -webkit-font-smoothing: antialiased;
-          transition: background 0.3s var(--ease), color 0.3s var(--ease);
+          -moz-osx-font-smoothing: grayscale;
+          transition: background 0.4s var(--ease), color 0.4s var(--ease);
+          position: relative;
+          overflow-x: hidden;
         }
 
-        /* ── THEME TOGGLE — same pill as LandingPage ── */
-        .lp-theme-btn {
-          position: fixed; bottom: 24px; right: 24px; z-index: 1000;
-          height: 36px; padding: 0 14px; border-radius: var(--r-pill);
-          background: var(--bg-card); border: 1px solid var(--border-med);
-          color: var(--text-3); cursor: pointer;
-          display: flex; align-items: center; gap: 7px;
-          box-shadow: var(--sh-lg); font-family: var(--font);
-          font-size: 12px; font-weight: 500; white-space: nowrap;
-          transition: all 0.2s var(--ease);
+        /* Ambient orbs */
+        .ro-orb {
+          position: fixed; border-radius: 50%;
+          pointer-events: none; z-index: 0;
+          filter: blur(80px); opacity: 0.35;
+          transition: opacity 0.5s ease;
         }
-        .lp-theme-btn:hover {
+        .ro-orb-1 {
+          width: 500px; height: 500px;
+          background: radial-gradient(circle, rgba(45,158,107,0.35) 0%, transparent 70%);
+          top: -100px; left: -100px;
+        }
+        .ro-orb-2 {
+          width: 400px; height: 400px;
+          background: radial-gradient(circle, rgba(59,125,216,0.2) 0%, transparent 70%);
+          bottom: 0; right: 200px;
+        }
+        [data-theme="dark"] .ro-orb-1 { opacity: 0.5; }
+        [data-theme="dark"] .ro-orb-2 { opacity: 0.4; }
+
+        /* ── THEME TOGGLE ── */
+        .ro-theme {
+          position: fixed; bottom: 28px; right: 28px; z-index: 1000;
+          height: 38px; padding: 0 16px; border-radius: var(--r-pill);
+          background: var(--bg-glass); border: 1px solid var(--border-med);
+          backdrop-filter: blur(20px) saturate(1.8);
+          color: var(--text-2); cursor: pointer;
+          display: flex; align-items: center; gap: 8px;
+          box-shadow: var(--sh-md); font-family: var(--font);
+          font-size: 12.5px; font-weight: 500;
+          transition: all 0.22s var(--ease);
+        }
+        .ro-theme:hover {
           color: var(--text-1); border-color: var(--border-str);
-          box-shadow: var(--sh-xl); transform: translateY(-1px);
+          box-shadow: var(--sh-lg); transform: translateY(-2px);
+          background: var(--bg-card);
         }
 
-        /* ── LAYOUT — two col below navbar ── */
-        .lp-wrap {
+        /* ── LAYOUT ── */
+        .ro-body {
           display: grid;
-          grid-template-columns: 1fr 440px;
-          min-height: calc(100vh - 56px);
+          grid-template-columns: 1fr 400px;
+          min-height: calc(100vh - 60px);
+          position: relative; z-index: 1;
         }
 
-        /* ── LEFT ── */
-        .lp-left {
-          padding: 60px 56px;
-          border-right: 1px solid var(--border);
-          display: flex; flex-direction: column; gap: 40px;
+        /* ══ LEFT PANEL ══ */
+        .ro-left {
+          padding: 52px 56px;
+          display: flex; flex-direction: column; gap: 36px;
           overflow-y: auto;
-          animation: lpHeroUp 0.7s var(--ease) both;
+          animation: fadeUp 0.7s var(--ease2) both;
         }
 
-        /* eyebrow */
-        .lp-eyebrow {
+        /* Status pill */
+        .ro-status {
           display: inline-flex; align-items: center; gap: 8px;
-          font-family: var(--font-mono); font-size: 11px;
-          color: var(--green-text); background: var(--green-sub);
-          border: 1px solid var(--green-brd);
-          padding: 4px 12px; border-radius: var(--r-pill);
-          letter-spacing: 0.02em; width: fit-content;
+          padding: 5px 14px; border-radius: var(--r-pill);
+          background: var(--green-sub); border: 1px solid var(--green-brd);
+          width: fit-content;
+          box-shadow: var(--glow-green);
         }
-        .lp-eyebrow-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: var(--green); flex-shrink: 0;
-          animation: lpPulse 2.5s ease infinite;
+        .ro-status-dot {
+          width: 7px; height: 7px; border-radius: 50%;
+          background: var(--green);
+          animation: pulse 2.5s ease infinite;
+          box-shadow: 0 0 8px var(--green);
         }
-
-        /* hero */
-        .lp-hero { display: flex; flex-direction: column; gap: 14px; }
-        .lp-hero h1 {
-          font-size: clamp(36px, 4vw, 56px); font-weight: 700;
-          line-height: 1.06; letter-spacing: -0.04em; color: var(--text-1);
-        }
-        .lp-hero-dim { color: var(--text-3); font-weight: 400; }
-        .lp-hero p {
-          font-size: 15px; color: var(--text-3);
-          line-height: 1.65; max-width: 420px;
+        .ro-status span {
+          font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+          letter-spacing: 0.04em; color: var(--green-text);
         }
 
-        /* stats row */
-        .lp-stats {
-          display: grid; grid-template-columns: repeat(4,1fr);
-          border: 1px solid var(--border); border-radius: var(--r-lg);
-          overflow: hidden; background: var(--border); gap: 1px;
-          box-shadow: var(--sh-sm);
+        /* Hero */
+        .ro-hero { display: flex; flex-direction: column; gap: 16px; }
+        .ro-hero h1 {
+          font-family: var(--font-serif);
+          font-size: clamp(44px, 4.5vw, 64px);
+          line-height: 1.02; letter-spacing: -0.01em;
+          color: var(--text-1); font-weight: 400;
         }
-        .lp-stat {
-          background: var(--bg-card); padding: 18px 12px;
-          display: flex; flex-direction: column; align-items: center; gap: 4px;
-          transition: background 0.15s;
+        .ro-hero h1 em {
+          font-style: italic; color: var(--text-3);
         }
-        .lp-stat:hover { background: var(--bg-1); }
-        .lp-stat-v {
-          font-size: 20px; font-weight: 700;
-          letter-spacing: -0.04em; color: var(--text-1); line-height: 1;
-        }
-        .lp-stat-l { font-size: 11px; color: var(--text-4); font-weight: 500; }
-
-        /* trust grid */
-        .lp-trust { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .lp-trust-item {
-          display: flex; align-items: center; gap: 10px;
-          padding: 10px 12px; background: var(--bg-card);
-          border: 1px solid var(--border); border-radius: var(--r-md);
-          font-size: 12px; color: var(--text-2);
-          box-shadow: var(--sh-sm); transition: all 0.15s var(--ease);
-        }
-        .lp-trust-item:hover { border-color: var(--border-med); transform: translateX(2px); }
-        .lp-trust-icon {
-          width: 28px; height: 28px; border-radius: var(--r-sm);
-          background: var(--bg-elevated); border: 1px solid var(--border);
-          display: flex; align-items: center; justify-content: center;
-          font-size: 12px; flex-shrink: 0;
+        .ro-hero p {
+          font-size: 14.5px; color: var(--text-2);
+          line-height: 1.72; max-width: 400px; font-weight: 400;
         }
 
-        /* ticker */
-        .lp-ticker {
-          display: flex; align-items: stretch;
-          border: 1px solid var(--border); border-radius: var(--r-md);
-          overflow: hidden; background: var(--bg-card); box-shadow: var(--sh-sm);
+        /* Quick access */
+        .ro-quick-label {
+          font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em;
+          text-transform: uppercase; color: var(--text-3);
+          display: flex; align-items: center; gap: 12px;
         }
-        .lp-ticker-badge {
-          display: flex; align-items: center; gap: 6px; padding: 8px 14px;
-          background: var(--bg-1); border-right: 1px solid var(--border);
-          font-family: var(--font-mono); font-size: 10px; font-weight: 600;
-          letter-spacing: 0.1em; text-transform: uppercase;
-          color: var(--green-text); white-space: nowrap; flex-shrink: 0;
-        }
-        .lp-ticker-dot {
-          width: 5px; height: 5px; border-radius: 50%;
-          background: var(--green); animation: lpBlink 2s ease infinite;
-        }
-        .lp-ticker-track { flex: 1; overflow: hidden; display: flex; align-items: center; }
-        .lp-ticker-inner {
-          display: flex; white-space: nowrap;
-          animation: lpTicker 50s linear infinite;
-        }
-        .lp-ticker-inner:hover { animation-play-state: paused; }
-        .lp-ticker-item {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 9px 20px; border-right: 1px solid var(--border);
-          font-family: var(--font-mono); font-size: 11px;
-          color: var(--text-4); white-space: nowrap;
-        }
-        .lp-ticker-region {
-          font-size: 10px; font-weight: 600;
-          letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3);
-        }
-        .lp-sdot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
-        .lp-sdot--ok   { background: var(--green); }
-        .lp-sdot--warn { background: var(--warn);  }
-        .lp-sdot--info { background: var(--info);  }
-
-        /* quick access */
-        .lp-quick { display: flex; flex-direction: column; gap: 10px; }
-        .lp-quick-lbl {
-          font-size: 11px; font-weight: 600;
-          letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-4);
-          display: flex; align-items: center; gap: 10px;
-        }
-        .lp-quick-lbl::after { content:''; flex:1; height:1px; background: var(--border); }
-        .lp-quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .lp-quick-tile {
-          display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-          background: var(--bg-card); border: 1px solid var(--border);
+        .ro-quick-label::after { content:''; flex:1; height:1px; background: var(--border-med); }
+        .ro-quick-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 10px; }
+        .ro-quick-tile {
+          display: flex; flex-direction: column; align-items: center;
+          gap: 8px; padding: 14px 8px;
+          background: var(--bg-glass); border: 1px solid var(--border-med);
           border-radius: var(--r-md); text-decoration: none;
-          box-shadow: var(--sh-sm); transition: all 0.18s var(--ease);
+          backdrop-filter: blur(12px);
+          box-shadow: var(--sh-xs);
+          transition: all 0.2s var(--ease);
+          text-align: center;
         }
-        .lp-quick-tile:hover {
-          border-color: var(--border-med); background: var(--bg-1);
-          transform: translateY(-2px); box-shadow: var(--sh-md);
+        .ro-quick-tile:hover {
+          border-color: var(--border-str);
+          transform: translateY(-3px);
+          box-shadow: var(--sh-md);
+          background: var(--bg-card);
         }
-        .lp-quick-ic {
-          width: 30px; height: 30px; border-radius: var(--r-sm);
-          background: var(--bg-elevated); border: 1px solid var(--border);
+        .ro-quick-ic {
+          width: 36px; height: 36px; border-radius: var(--r-md);
+          background: var(--bg-inset); border: 1px solid var(--border-med);
           display: flex; align-items: center; justify-content: center;
-          font-size: 13px; flex-shrink: 0;
+          font-size: 16px; flex-shrink: 0;
         }
-        .lp-quick-title {
-          display: block; font-size: 12.5px; font-weight: 600;
+        .ro-quick-title {
+          font-size: 11.5px; font-weight: 600;
           color: var(--text-1); letter-spacing: -0.01em; line-height: 1.2;
         }
-        .lp-quick-sub { display: block; font-size: 11px; color: var(--text-4); margin-top: 1px; }
+        .ro-quick-sub { font-size: 10.5px; color: var(--text-3); margin-top: 1px; line-height: 1.3; }
 
-        /* ── RIGHT CARD ── */
-        .lp-card {
-          background: var(--bg-card);
-          display: flex; flex-direction: column;
-          padding: 36px 32px; gap: 22px;
+        /* Stats strip */
+        .ro-strip {
+          display: grid; grid-template-columns: repeat(4,1fr);
+          border: 1px solid var(--border-med); border-radius: var(--r-md);
+          overflow: hidden; background: var(--border); gap: 1px;
+          margin-top: auto;
+        }
+        .ro-strip-s {
+          background: var(--bg-inset); padding: 12px 8px;
+          display: flex; flex-direction: column; align-items: center; gap: 3px;
+        }
+        .ro-strip-v {
+          font-size: 13px; font-weight: 700; letter-spacing: -0.03em;
+          color: var(--text-1); font-family: var(--font-serif); font-style: italic;
+        }
+        .ro-strip-l { font-size: 9.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+
+        /* ══ RIGHT PANEL ══ */
+        .ro-card-wrap {
+          background: transparent;
+          border-left: none;
+          display: flex; align-items: center; justify-content: center;
+          padding: 40px 32px;
           overflow-y: auto;
-          animation: lpSlideIn 0.7s 0.1s var(--ease) both;
+          position: relative;
+        }
+        .ro-card-wrap::before {
+          content: '';
+          position: absolute; top: 0; left: 0; bottom: 0; width: 100px;
+          background: linear-gradient(90deg, var(--bg) 0%, transparent 100%);
+          pointer-events: none; z-index: 0;
         }
 
-        /* notice */
-        .lp-notice {
-          display: flex; align-items: center; gap: 10px; padding: 8px 11px;
-          background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--r-md);
+        /* The actual floating card */
+        .ro-card {
+          width: 100%; max-width: 380px;
+          background: var(--bg-card);
+          border: 1px solid var(--border-med);
+          border-radius: var(--r-xl);
+          box-shadow: var(--sh-xl), 0 0 0 1px var(--border);
+          padding: 32px 28px 28px;
+          display: flex; flex-direction: column; gap: 20px;
+          position: relative; overflow: hidden;
+          animation: cardReveal 0.65s 0.1s var(--ease2) both;
         }
-        .lp-notice-tag {
+        .ro-card::before {
+          content: '';
+          position: absolute; top: 0; left: 0; right: 0; height: 50%;
+          background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
+          pointer-events: none; border-radius: var(--r-xl) var(--r-xl) 0 0;
+        }
+        .ro-card::after {
+          content: '';
+          position: absolute; top: 0; left: 32px; right: 32px; height: 1.5px;
+          background: linear-gradient(90deg, transparent, var(--green), transparent);
+          border-radius: 0 0 var(--r-pill) var(--r-pill);
+        }
+
+        /* Card header */
+        .ro-card-head {
+          display: flex; flex-direction: column; gap: 5px;
+          animation: stagger2 0.5s 0.22s var(--ease2) both;
+        }
+        .ro-card-eyebrow {
           font-family: var(--font-mono); font-size: 10px; font-weight: 600;
-          letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3);
-          background: var(--bg-elevated); border: 1px solid var(--border-med);
-          padding: 2px 7px; border-radius: var(--r-xs);
-          white-space: nowrap; flex-shrink: 0;
+          letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3);
+          display: flex; align-items: center; gap: 8px;
         }
-        .lp-notice-txt {
-          font-size: 11.5px; color: var(--text-3);
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-          opacity: 0; transform: translateY(3px);
-          transition: opacity 0.26s ease, transform 0.26s var(--ease);
+        .ro-card-eyebrow::before {
+          content: ''; display: inline-block;
+          width: 16px; height: 1px; background: var(--border-str);
         }
-        .lp-notice-txt.vis { opacity: 1; transform: translateY(0); }
+        .ro-card-title {
+          font-family: var(--font-serif);
+          font-size: 28px; font-weight: 400;
+          letter-spacing: -0.01em; color: var(--text-1); line-height: 1.1;
+        }
+        .ro-card-desc { font-size: 12.5px; color: var(--text-2); line-height: 1.65; font-weight: 400; }
 
-        /* card header */
-        .lp-card-hd { display: flex; flex-direction: column; gap: 5px; }
-        .lp-card-sup {
-          font-family: var(--font-mono); font-size: 11px;
-          letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-4);
-        }
-        .lp-card-title {
-          font-size: 26px; font-weight: 700;
-          letter-spacing: -0.03em; color: var(--text-1); line-height: 1.1;
-        }
-        .lp-card-desc { font-size: 13px; color: var(--text-3); line-height: 1.6; }
-
-        /* role badge */
-        .lp-role {
-          display: flex; align-items: center; gap: 10px; padding: 10px 13px;
+        /* Role badge */
+        .ro-role-badge {
+          display: flex; align-items: center; gap: 11px; padding: 10px 13px;
           background: var(--green-sub); border: 1px solid var(--green-brd);
-          border-radius: var(--r-md);
-          animation: lpFadeIn 0.24s ease both;
+          border-radius: var(--r-md); box-shadow: var(--glow-green);
+          animation: fadeIn 0.28s var(--ease) both;
         }
-        .lp-role-icon {
+        .ro-role-ic {
           width: 32px; height: 32px; border-radius: var(--r-sm);
-          background: rgba(16,185,129,0.12); border: 1px solid var(--green-brd);
+          background: rgba(52,201,124,0.12); border: 1px solid var(--green-brd);
           display: flex; align-items: center; justify-content: center;
           font-size: 14px; flex-shrink: 0;
         }
-        .lp-role-cap {
-          display: block; font-size: 10.5px; font-weight: 500;
-          letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3);
+        .ro-role-cap {
+          font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em;
+          text-transform: uppercase; color: var(--text-2);
         }
-        .lp-role-name {
-          display: block; font-size: 13.5px; font-weight: 700;
-          color: var(--green-text); margin-top: 1px;
+        .ro-role-name {
+          font-size: 13.5px; font-weight: 600; color: var(--green-text);
+          margin-top: 2px;
         }
 
-        /* form */
-        .lp-form { display: flex; flex-direction: column; gap: 16px; }
-        .lp-field { display: flex; flex-direction: column; gap: 6px; }
-        .lp-field label {
-          font-size: 12px; font-weight: 500; color: var(--text-2); letter-spacing: 0.01em;
+        /* Form */
+        .ro-form {
+          display: flex; flex-direction: column; gap: 14px;
+          animation: stagger3 0.5s 0.28s var(--ease2) both;
         }
-        .lp-field input {
-          height: 40px; padding: 0 12px; border-radius: var(--r-md);
-          border: 1px solid var(--border); background: var(--bg-1);
-          color: var(--text-1); font-family: var(--font); font-size: 13.5px;
+        .ro-field { display: flex; flex-direction: column; gap: 6px; }
+        .ro-field label {
+          font-size: 12px; font-weight: 600; color: var(--text-1);
+          letter-spacing: 0.03em;
+        }
+        .ro-input-wrap { position: relative; }
+        .ro-field input {
+          height: 44px; padding: 0 14px; border-radius: var(--r-md);
+          border: 1.5px solid var(--border-med);
+          background: var(--bg-inset);
+          color: var(--text-1); font-family: var(--font); font-size: 14px;
           outline: none; width: 100%; -webkit-appearance: none;
-          transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+          transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+          font-weight: 400;
         }
-        .lp-field input::placeholder { color: var(--text-4); }
-        .lp-field input:hover { border-color: var(--border-med); }
-        .lp-field input:focus {
-          border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-sub);
-          background: var(--bg-card);
+        .ro-field input::placeholder { color: var(--text-3); font-size: 13px; }
+        .ro-field input:hover:not(:focus) { border-color: var(--border-str); }
+        .ro-field input:focus {
+          border-color: var(--accent); background: var(--bg-card);
+          box-shadow: 0 0 0 3px var(--accent-sub);
         }
-        .lp-field.err input { border-color: var(--danger); box-shadow: none; }
-        .lp-field-err {
-          font-size: 11.5px; color: var(--danger); display: flex; align-items: center; gap: 5px;
+        .ro-field.has-err input {
+          border-color: var(--red); box-shadow: 0 0 0 3px var(--red-sub);
         }
-        .lp-pw { position: relative; }
-        .lp-pw input { padding-right: 72px; }
-        .lp-pw-btn {
-          position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-          background: none; border: none; cursor: pointer;
-          font-family: var(--font); font-size: 11.5px; font-weight: 500;
-          color: var(--text-3); padding: 3px 6px; border-radius: var(--r-xs);
-          letter-spacing: 0.04em; transition: color 0.12s, background 0.12s;
+        .ro-field-err {
+          font-size: 11.5px; color: var(--red);
+          display: flex; align-items: center; gap: 5px;
+          animation: fadeIn 0.2s ease both;
+          font-weight: 500;
         }
-        .lp-pw-btn:hover { color: var(--text-1); background: var(--bg-elevated); }
+        .ro-pw-btn {
+          position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+          background: var(--bg-card); border: 1px solid var(--border-med);
+          border-radius: var(--r-xs); cursor: pointer;
+          font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+          color: var(--text-2); padding: 4px 10px; letter-spacing: 0.06em;
+          text-transform: uppercase;
+          transition: all 0.15s; white-space: nowrap;
+        }
+        .ro-pw-btn:hover {
+          color: var(--text-1); border-color: var(--border-str);
+          background: var(--bg-inset);
+        }
 
-        /* submit */
-        .lp-submit {
-          height: 40px; border-radius: var(--r-md);
-          background: var(--accent); border: 1px solid var(--accent);
+        /* Submit */
+        .ro-submit {
+          height: 46px; border-radius: var(--r-md);
+          background: var(--accent); border: none;
           color: var(--text-inv); font-family: var(--font);
-          font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; cursor: pointer;
+          font-size: 14px; font-weight: 600; letter-spacing: 0.01em;
+          cursor: pointer; width: 100%; margin-top: 2px;
           display: flex; align-items: center; justify-content: center; gap: 8px;
-          margin-top: 4px; box-shadow: var(--sh-sm);
-          transition: background 0.18s var(--ease), transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
+          box-shadow: 0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
+          transition: all 0.22s var(--ease);
+          position: relative; overflow: hidden;
         }
-        .lp-submit:hover:not(:disabled) {
-          background: var(--accent-mid); transform: translateY(-1px); box-shadow: var(--sh-md);
+        .ro-submit::before {
+          content: ''; position: absolute; inset: 0;
+          background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, transparent 55%);
+          pointer-events: none;
         }
-        .lp-submit:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-        .lp-spinner {
-          width: 14px; height: 14px;
-          border: 1.5px solid rgba(255,255,255,0.25);
-          border-top-color: rgba(255,255,255,0.9);
-          border-radius: 50%; animation: lpSpin 0.65s linear infinite;
+        .ro-submit:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
         }
-        [data-theme="dark"] .lp-spinner {
-          border-color: rgba(0,0,0,0.2); border-top-color: rgba(0,0,0,0.85);
+        .ro-submit:active:not(:disabled) {
+          transform: translateY(1px);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-
-        /* divider */
-        .lp-div {
-          display: flex; align-items: center; gap: 12px;
-          font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-4);
+        .ro-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+        .ro-spinner {
+          width: 16px; height: 16px;
+          border: 2px solid rgba(255,255,255,0.25);
+          border-top-color: rgba(255,255,255,0.95);
+          border-radius: 50%; animation: spin 0.65s linear infinite;
         }
-        .lp-div::before, .lp-div::after { content:''; flex:1; height:1px; background: var(--border); }
-
-        /* aux links */
-        .lp-links { display: flex; gap: 8px; }
-        .lp-link {
-          flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-          height: 38px; border-radius: var(--r-md);
-          border: 1px solid var(--border); background: transparent;
-          font-family: var(--font); font-size: 12px; font-weight: 500;
-          color: var(--text-2); text-decoration: none; box-shadow: var(--sh-sm);
-          transition: all 0.18s var(--ease);
-        }
-        .lp-link:hover {
-          border-color: var(--border-med); background: var(--bg-1);
-          color: var(--text-1); transform: translateY(-1px); box-shadow: var(--sh-md);
+        [data-theme="dark"] .ro-spinner {
+          border-color: rgba(0,0,0,0.25);
+          border-top-color: rgba(0,0,0,0.9);
         }
 
-        /* bottom stats strip */
-        .lp-strip {
-          display: grid; grid-template-columns: repeat(4,1fr);
-          padding: 12px 14px; border-radius: var(--r-md);
-          background: var(--bg-1); border: 1px solid var(--border);
-          margin-top: auto;
+        /* Footer */
+        .ro-footer {
+          border-top: 1px solid var(--border-med);
+          background: var(--bg-card);
+          padding: 18px 56px;
+          display: flex; justify-content: space-between; align-items: center;
+          position: relative; z-index: 1;
         }
-        .lp-strip-s { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-        .lp-strip-v { font-size: 13.5px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-1); }
-        .lp-strip-l { font-size: 10px; color: var(--text-4); }
+        .ro-footer-brand strong { font-size: 13px; font-weight: 700; color: var(--text-1); letter-spacing: -0.02em; }
+        .ro-footer-brand span { font-size: 11px; color: var(--text-3); display: block; margin-top: 1px; font-weight: 400; }
+        .ro-footer-copy { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3); letter-spacing: 0.02em; }
+        .ro-footer-nav { display: flex; gap: 20px; }
+        .ro-footer-nav a { font-size: 12px; color: var(--text-2); text-decoration: none; transition: color 0.15s; font-weight: 400; }
+        .ro-footer-nav a:hover { color: var(--text-1); }
 
-        /* footer */
-        .lp-footer {
-          border-top: 1px solid var(--border); background: var(--bg-card);
-          padding: 18px 56px; display: flex; justify-content: space-between; align-items: center;
+        /* ══ TOASTS ══ */
+        .ro-toasts {
+          position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+          z-index: 9999;
+          display: flex; flex-direction: column; align-items: center; gap: 8px;
+          pointer-events: none;
         }
-        .lp-footer-brand { display: flex; flex-direction: column; gap: 2px; }
-        .lp-footer-brand strong { font-size: 12.5px; font-weight: 700; color: var(--text-1); letter-spacing: -0.01em; }
-        .lp-footer-brand span  { font-size: 11px; color: var(--text-4); }
-        .lp-footer-copy { font-family: var(--font-mono); font-size: 11px; color: var(--text-4); }
-        .lp-footer-nav  { display: flex; gap: 18px; }
-        .lp-footer-nav a { font-size: 11px; color: var(--text-3); text-decoration: none; transition: color 0.12s; }
-        .lp-footer-nav a:hover { color: var(--text-1); }
+        .ro-toast {
+          pointer-events: all; cursor: pointer;
+          display: inline-flex; align-items: center;
+          border-radius: 999px;
+          overflow: hidden; position: relative;
+          will-change: transform, opacity;
+          white-space: nowrap;
+        }
+        .ro-toast:hover .ro-toast-shell { filter: brightness(1.08); transform: translateY(-1px); }
+        .ro-toast:active .ro-toast-shell { transform: scale(0.96); }
 
-        /* toasts */
-        .lp-toasts {
-          position: fixed; top: 20px; right: 20px; z-index: 9999;
-          display: flex; flex-direction: column; gap: 8px;
-          pointer-events: none; width: 320px; max-width: calc(100vw - 32px);
+        .ro-toast-shell {
+          display: flex; align-items: center; gap: 9px;
+          padding: 7px 14px 7px 8px;
+          border-radius: 999px;
+          position: relative;
+          transition: filter 0.18s, transform 0.18s var(--ease);
         }
-        .lp-toast {
-          display: flex; align-items: flex-start; gap: 11px;
-          padding: 12px 14px 16px; border-radius: var(--r-lg);
-          background: var(--bg-card); border: 1px solid var(--border);
-          box-shadow: var(--sh-xl); pointer-events: all; cursor: pointer;
-          position: relative; overflow: hidden; transition: transform 0.12s;
+
+        /* Solid pill colors */
+        .ro-toast--info    .ro-toast-shell {
+          background: #2563eb;
+          box-shadow: 0 4px 20px rgba(37,99,235,0.6), 0 1px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
         }
-        .lp-toast:hover { transform: translateX(-2px); }
-        .lp-toast--info    { border-top: 2px solid var(--info); }
-        .lp-toast--success { border-top: 2px solid var(--green); }
-        .lp-toast--error   { border-top: 2px solid var(--danger); }
-        .lp-toast.tin  { animation: lpToastIn  0.28s var(--ease) both; }
-        .lp-toast.tout { animation: lpToastOut 0.18s ease forwards; pointer-events: none; }
-        .lp-toast-ic {
-          width: 30px; height: 30px; border-radius: var(--r-sm);
+        .ro-toast--success .ro-toast-shell {
+          background: #16a34a;
+          box-shadow: 0 4px 20px rgba(22,163,74,0.6), 0 1px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+        .ro-toast--error   .ro-toast-shell {
+          background: #dc2626;
+          box-shadow: 0 4px 20px rgba(220,38,38,0.6), 0 1px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        /* Top sheen */
+        .ro-toast-shell::before {
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
+          background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+          border-radius: 999px 999px 0 0; pointer-events: none;
+        }
+
+        /* Icon bubble */
+        .ro-toast-ic {
+          width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+          background: rgba(255,255,255,0.25);
+          border: 1.5px solid rgba(255,255,255,0.4);
           display: flex; align-items: center; justify-content: center;
-          font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+          font-size: 11px; font-weight: 900; color: #fff;
+          position: relative; z-index: 1;
+          letter-spacing: 0;
         }
-        .lp-toast--info    .lp-toast-ic { background: var(--info-sub);   color: var(--info);       border: 1px solid rgba(59,130,246,0.2); }
-        .lp-toast--success .lp-toast-ic { background: var(--green-sub);  color: var(--green-text); border: 1px solid var(--green-brd); }
-        .lp-toast--error   .lp-toast-ic { background: var(--danger-sub); color: var(--danger);     border: 1px solid rgba(239,68,68,0.2); }
-        .lp-toast-bd { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-        .lp-toast-ttl { font-size: 13px; font-weight: 700; color: var(--text-1); letter-spacing: -0.01em; }
-        .lp-toast-sub { font-size: 12px; color: var(--text-3); line-height: 1.5; }
-        .lp-toast-x {
-          flex-shrink: 0; width: 20px; height: 20px; border-radius: var(--r-xs);
-          background: none; border: none; color: var(--text-4); font-size: 14px;
+
+        /* Text — single line pill layout */
+        .ro-toast-body { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 6px; }
+        .ro-toast-ttl {
+          font-size: 13px; font-weight: 700; color: #fff;
+          letter-spacing: -0.01em; line-height: 1;
+        }
+        .ro-toast-msg {
+          font-size: 12px; font-weight: 400;
+          color: rgba(255,255,255,0.85); line-height: 1;
+        }
+
+        /* Close */
+        .ro-toast-close {
+          flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+          background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.25);
+          color: rgba(255,255,255,0.75); font-size: 12px;
           display: flex; align-items: center; justify-content: center;
-          cursor: pointer; transition: background 0.12s, color 0.12s;
+          cursor: pointer; position: relative; z-index: 1;
+          margin-left: 4px;
+          transition: all 0.15s;
         }
-        .lp-toast-x:hover { background: var(--bg-elevated); color: var(--text-1); }
-        .lp-toast-bar {
-          position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-          transform-origin: left; animation: lpDrain 5s linear forwards;
-        }
-        .lp-toast--info    .lp-toast-bar { background: var(--info); }
-        .lp-toast--success .lp-toast-bar { background: var(--green); }
-        .lp-toast--error   .lp-toast-bar { background: var(--danger); }
+        .ro-toast-close:hover { background: rgba(0,0,0,0.32); color: #fff; }
 
-        /* ── KEYFRAMES ── */
-        @keyframes lpHeroUp  { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes lpSlideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
-        @keyframes lpFadeIn  { from { opacity:0; } to { opacity:1; } }
-        @keyframes lpPulse   { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
-        @keyframes lpBlink   { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-        @keyframes lpTicker  { from{transform:translateX(0);} to{transform:translateX(-50%);} }
-        @keyframes lpSpin    { to{transform:rotate(360deg);} }
-        @keyframes lpToastIn  { from{opacity:0;transform:translateY(-10px) scale(0.97);} to{opacity:1;transform:translateY(0) scale(1);} }
-        @keyframes lpToastOut { to{opacity:0;transform:translateY(-8px) scale(0.97);} }
-        @keyframes lpDrain    { from{transform:scaleX(1);} to{transform:scaleX(0);} }
-
-        /* ── RESPONSIVE ── */
-        @media (max-width: 1000px) {
-          .lp-wrap { grid-template-columns: 1fr; }
-          .lp-left { border-right: none; border-bottom: 1px solid var(--border); padding: 40px 28px; }
-          .lp-card { max-width: 480px; width: 100%; margin: 0 auto; }
-          .lp-footer { padding: 18px 28px; }
+        /* Progress bar — thin line at bottom of pill */
+        .ro-toast-bar {
+          position: absolute; bottom: 0; left: 10%; right: 10%; height: 2px;
+          transform-origin: left; animation: drain 2.5s linear forwards;
+          background: rgba(255,255,255,0.4);
+          border-radius: 999px;
         }
-        @media (max-width: 600px) {
-          .lp-left { padding: 32px 16px; gap: 28px; }
-          .lp-card { padding: 28px 16px; }
-          .lp-stats { grid-template-columns: repeat(2,1fr); }
-          .lp-trust { grid-template-columns: 1fr; }
-          .lp-quick-grid { grid-template-columns: 1fr; }
-          .lp-links { flex-direction: column; }
-          .lp-footer { flex-direction: column; gap: 10px; text-align: center; padding: 16px; }
-          .lp-toasts { right: 10px; left: 10px; width: auto; }
+
+        /* Bounce in / shrink out */
+        .ro-toast.tin  { animation: toastIn  0.45s var(--ease2) both; }
+        .ro-toast.tout { animation: toastOut 0.25s var(--ease)  forwards; pointer-events: none; }
+
+        /* ── Keyframes ── */
+        @keyframes fadeUp   { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes cardReveal { from { opacity:0; transform:translateY(20px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+        @keyframes stagger2 { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes stagger3 { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+        @keyframes pulse    { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(0.85);} }
+        @keyframes spin     { to{transform:rotate(360deg);} }
+        @keyframes drain    { from{transform:scaleX(1);} to{transform:scaleX(0);} }
+        @keyframes toastIn {
+          0%   { opacity:0; transform: scale(0.6)  translateY(-28px); }
+          55%  { opacity:1; transform: scale(1.06) translateY(4px);  }
+          75%  { transform: scale(0.97) translateY(-2px); }
+          100% { opacity:1; transform: scale(1)    translateY(0);    }
+        }
+        @keyframes toastOut {
+          0%   { opacity:1; transform: scale(1)    translateY(0);    }
+          40%  { opacity:1; transform: scale(1.04) translateY(-4px); }
+          100% { opacity:0; transform: scale(0.75) translateY(-22px);}
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+          .ro-body { grid-template-columns: 1fr; }
+          .ro-left { border-right: none; border-bottom: 1px solid var(--border); padding: 40px 32px; }
+          .ro-card-wrap { border-left: none; padding: 32px; }
+          .ro-card-wrap::before { display: none; }
+          .ro-card { max-width: 480px; }
+          .ro-footer { padding: 18px 32px; }
+          .ro-quick-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+          .ro-left { padding: 28px 18px; gap: 24px; }
+          .ro-card-wrap { padding: 24px 18px; }
+          .ro-quick-grid { grid-template-columns: repeat(2, 1fr); }
+          .ro-footer { flex-direction: column; gap: 10px; text-align: center; padding: 16px 18px; }
+          .ro-footer-nav { gap: 14px; }
+          .ro-toasts { right: 12px; left: 12px; width: auto; }
         }
       `}</style>
 
-      <div className="lp-page">
+      <div className="ro-page">
+        {/* Ambient orbs */}
+        <div className="ro-orb ro-orb-1" />
+        <div className="ro-orb ro-orb-2" />
 
-        {/* ── Your existing Navbar ── */}
         <Navbar />
 
-        {/* ── Theme toggle — same as LandingPage ── */}
         <button
-          className="lp-theme-btn"
+          className="ro-theme"
           onClick={() => setDark(d => !d)}
           aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
         >
@@ -687,79 +728,33 @@ export default function LoginPage() {
           )}
         </button>
 
-        {/* ── MAIN TWO-COLUMN GRID ── */}
-        <div className="lp-wrap">
+        <div className="ro-body">
 
-          {/* ══ LEFT PANEL ══ */}
-          <div className="lp-left">
+          {/* ══ LEFT ══ */}
+          <div className="ro-left">
 
-            <div className="lp-eyebrow">
-              <span className="lp-eyebrow-dot" />
-              Secure Government Portal · RuralOps v2.4
+            <div className="ro-status">
+              <span className="ro-status-dot" />
+              <span>Secure Government Portal · RuralOps v2.4</span>
             </div>
 
-            <div className="lp-hero">
-              <h1>Rural Governance,<br /><span className="lp-hero-dim">Unified.</span></h1>
+            <div className="ro-hero">
+              <h1>Rural Governance,<br /><em>Unified.</em></h1>
               <p>
-                Enter your registered phone number and password to access the RuralOps
-                platform. Your session is secured and managed by the central authentication service.
+                Enter your registered phone number and password to access the
+                RuralOps platform. Your session is secured and managed by the
+                central authentication service.
               </p>
             </div>
 
-            <div className="lp-stats">
-              {[
-                { v:"40K+", l:"Villages" }, { v:"9.2M", l:"Citizens" },
-                { v:"98.2%",l:"Approved" }, { v:"₹189Cr",l:"Disbursed" },
-              ].map((s,i) => (
-                <div className="lp-stat" key={i}>
-                  <span className="lp-stat-v">{s.v}</span>
-                  <span className="lp-stat-l">{s.l}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="lp-trust">
-              {[
-                { icon:"✓",  text:"Identity verified by authorised VAO officers" },
-                { icon:"🔒", text:"Secure, encrypted data transmission" },
-                { icon:"📂", text:"Village-level governance access" },
-                { icon:"🛡️", text:"Compliant with state data protection norms" },
-              ].map((pt,i) => (
-                <div className="lp-trust-item" key={i}>
-                  <span className="lp-trust-icon">{pt.icon}</span>
-                  <span>{pt.text}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="lp-ticker" aria-hidden="true">
-              <div className="lp-ticker-badge">
-                <span className="lp-ticker-dot" />
-                Live
-              </div>
-              <div className="lp-ticker-track">
-                <div className="lp-ticker-inner">
-                  {[...TICKER_ITEMS,...TICKER_ITEMS].map((item,i) => (
-                    <div className="lp-ticker-item" key={i}>
-                      <span className="lp-ticker-region">{item.region}</span>
-                      <span className={`lp-sdot lp-sdot--${item.status}`} />
-                      <span>{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="lp-quick">
-              <p className="lp-quick-lbl">Quick Access</p>
-              <div className="lp-quick-grid">
+            <div>
+              <p className="ro-quick-label">Quick Access</p>
+              <div className="ro-quick-grid">
                 {QUICK_LINKS.map(ql => (
-                  <Link key={ql.to} to={ql.to} className="lp-quick-tile">
-                    <span className="lp-quick-ic">{ql.icon}</span>
-                    <div>
-                      <span className="lp-quick-title">{ql.label}</span>
-                      <span className="lp-quick-sub">{ql.sub}</span>
-                    </div>
+                  <Link key={ql.to} to={ql.to} className="ro-quick-tile">
+                    <span className="ro-quick-ic">{ql.icon}</span>
+                    <span className="ro-quick-title">{ql.label}</span>
+                    <span className="ro-quick-sub">{ql.sub}</span>
                   </Link>
                 ))}
               </div>
@@ -768,101 +763,82 @@ export default function LoginPage() {
           </div>
 
           {/* ══ RIGHT CARD ══ */}
-          <div className="lp-card">
+          <div className="ro-card-wrap">
+            <div className="ro-card">
 
-            <div className="lp-notice">
-              <span className="lp-notice-tag">Notice</span>
-              <p className={`lp-notice-txt${noticeVis ? " vis" : ""}`}>
-                {ANNOUNCEMENTS[noticeIdx]}
-              </p>
-            </div>
+              {/* Card header */}
+              <div className="ro-card-head">
+                <span className="ro-card-eyebrow">Secure Login</span>
+                <h2 className="ro-card-title">Sign In to RuralOps</h2>
+                <p className="ro-card-desc">Access your assigned dashboard by entering your credentials below.</p>
+              </div>
 
-            <div className="lp-card-hd">
-              <span className="lp-card-sup">Secure Login</span>
-              <h2 className="lp-card-title">Sign In to RuralOps</h2>
-              <p className="lp-card-desc">Access your assigned dashboard by entering your credentials below.</p>
-            </div>
-
-            {role && (
-              <div className="lp-role">
-                <span className="lp-role-icon">{role.icon}</span>
-                <div>
-                  <span className="lp-role-cap">Authenticated as</span>
-                  <span className="lp-role-name">{role.label}</span>
+              {/* Role badge — shown after successful auth */}
+              {role && (
+                <div className="ro-role-badge">
+                  <span className="ro-role-ic">{role.icon}</span>
+                  <div>
+                    <span className="ro-role-cap">Authenticated as</span>
+                    <div className="ro-role-name">{role.label}</div>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <form onSubmit={handleLogin} className="lp-form" noValidate>
+              {/* Login form */}
+              <form onSubmit={handleLogin} className="ro-form" noValidate>
 
-              <div className={`lp-field${phoneErr ? " err" : ""}`}>
-                <label htmlFor="lp-phone">Phone Number</label>
-                <input
-                  id="lp-phone" type="tel" value={phone}
-                  onChange={e => { setPhone(e.target.value); if (phoneErr) setPhoneErr(vPhone(e.target.value)); }}
-                  onBlur={e => setPhoneErr(vPhone(e.target.value))}
-                  placeholder="9876543210" maxLength="10" autoComplete="tel"
-                />
-                {phoneErr && <span className="lp-field-err" role="alert">⚠ {phoneErr}</span>}
-              </div>
-
-              <div className={`lp-field${passErr ? " err" : ""}`}>
-                <label htmlFor="lp-pwd">Password</label>
-                <div className="lp-pw">
+                <div className={`ro-field${phoneErr ? " has-err" : ""}`}>
+                  <label htmlFor="ro-phone">Phone Number</label>
                   <input
-                    id="lp-pwd" type={showPw ? "text" : "password"} value={password}
-                    onChange={e => { setPassword(e.target.value); if (passErr) setPassErr(vPass(e.target.value)); }}
-                    onBlur={e => setPassErr(vPass(e.target.value))}
-                    placeholder="Enter your password" autoComplete="current-password"
+                    id="ro-phone" type="tel" value={phone}
+                    onChange={e => { setPhone(e.target.value); if (phoneErr) setPhoneErr(vPhone(e.target.value)); }}
+                    onBlur={e => setPhoneErr(vPhone(e.target.value))}
+                    placeholder="9876543210" maxLength="10" autoComplete="tel"
                   />
-                  <button type="button" className="lp-pw-btn"
-                    onClick={() => setShowPw(v => !v)}
-                    aria-label={showPw ? "Hide password" : "Show password"}>
-                    {showPw ? "Hide" : "Show"}
-                  </button>
+                  {phoneErr && <span className="ro-field-err" role="alert">⚠ {phoneErr}</span>}
                 </div>
-                {passErr && <span className="lp-field-err" role="alert">⚠ {passErr}</span>}
-              </div>
 
-              <button type="submit" className="lp-submit" disabled={loading}>
-                {loading
-                  ? <><span className="lp-spinner" aria-hidden="true" /> Authenticating…</>
-                  : <>Sign In <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></>
-                }
-              </button>
-
-            </form>
-
-            <div className="lp-div"><span>or</span></div>
-
-            <div className="lp-links">
-              <Link to="/citizen/register"   className="lp-link">📝 Register</Link>
-              <Link to="/activation/request" className="lp-link">✉️ Request Key</Link>
-            </div>
-
-            <div className="lp-strip">
-              {[
-                {v:"40K+",l:"Villages"},{v:"9.2M+",l:"Citizens"},
-                {v:"98.2%",l:"Approved"},{v:"₹189Cr",l:"Disbursed"},
-              ].map((s,i) => (
-                <div className="lp-strip-s" key={i}>
-                  <span className="lp-strip-v">{s.v}</span>
-                  <span className="lp-strip-l">{s.l}</span>
+                <div className={`ro-field${passErr ? " has-err" : ""}`}>
+                  <label htmlFor="ro-pwd">Password</label>
+                  <div className="ro-input-wrap">
+                    <input
+                      id="ro-pwd" type={showPw ? "text" : "password"} value={password}
+                      onChange={e => { setPassword(e.target.value); if (passErr) setPassErr(vPass(e.target.value)); }}
+                      onBlur={e => setPassErr(vPass(e.target.value))}
+                      placeholder="Enter your password" autoComplete="current-password"
+                      style={{ paddingRight: '72px' }}
+                    />
+                    <button type="button" className="ro-pw-btn"
+                      onClick={() => setShowPw(v => !v)}
+                      aria-label={showPw ? "Hide password" : "Show password"}>
+                      {showPw ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  {passErr && <span className="ro-field-err" role="alert">⚠ {passErr}</span>}
                 </div>
-              ))}
-            </div>
 
+                <button type="submit" className="ro-submit" disabled={loading}>
+                  {loading ? (
+                    <><span className="ro-spinner" aria-hidden="true" /> Authenticating…</>
+                  ) : (
+                    <>Sign In <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></>
+                  )}
+                </button>
+
+              </form>
+
+            </div>
           </div>
+
         </div>
 
-        {/* ── FOOTER ── */}
-        <footer className="lp-footer">
-          <div className="lp-footer-brand">
+        <footer className="ro-footer">
+          <div className="ro-footer-brand">
             <strong>RuralOps Platform</strong>
             <span>Digital Rural Governance Infrastructure</span>
           </div>
-          <div className="lp-footer-copy">© 2026 RuralOps — GOWTHAM CHIRIKI</div>
-          <nav className="lp-footer-nav">
+          <div className="ro-footer-copy">© 2026 RuralOps — GOWTHAM CHIRIKI</div>
+          <nav className="ro-footer-nav">
             <a href="#">Privacy</a>
             <a href="#">Security</a>
             <a href="#">Support</a>
@@ -871,24 +847,29 @@ export default function LoginPage() {
 
       </div>
 
-      {/* ── TOASTS ── */}
-      <div className="lp-toasts" role="region" aria-label="Notifications" aria-live="polite">
+      {/* ══ TOASTS ══ */}
+      <div className="ro-toasts" role="region" aria-label="Notifications" aria-live="polite">
         {toasts.map(t => (
-          <div key={t.id}
-            className={`lp-toast lp-toast--${t.type} ${t.out ? "tout" : "tin"}`}
+          <div
+            key={t.id}
+            className={`ro-toast ro-toast--${t.type} ${t.out ? "tout" : "tin"}`}
             onClick={() => dismissToast(t.id)}
           >
-            <div className="lp-toast-ic">
-              {t.type === "success" ? "✓" : t.type === "error" ? "✕" : "ℹ"}
+            <div className="ro-toast-shell">
+              <div className="ro-toast-ic">
+                {t.type === "success" ? "✓" : t.type === "error" ? "✕" : "i"}
+              </div>
+              <div className="ro-toast-body">
+                <div className="ro-toast-ttl">{t.ttl}</div>
+                <div className="ro-toast-msg">{t.sub}</div>
+              </div>
+              <button
+                className="ro-toast-close"
+                onClick={e => { e.stopPropagation(); dismissToast(t.id); }}
+                aria-label="Dismiss"
+              >×</button>
             </div>
-            <div className="lp-toast-bd">
-              <div className="lp-toast-ttl">{t.ttl}</div>
-              <div className="lp-toast-sub">{t.sub}</div>
-            </div>
-            <button className="lp-toast-x"
-              onClick={e => { e.stopPropagation(); dismissToast(t.id); }}
-              aria-label="Dismiss">×</button>
-            {!t.out && <div className="lp-toast-bar" />}
+            {!t.out && <div className="ro-toast-bar" />}
           </div>
         ))}
       </div>

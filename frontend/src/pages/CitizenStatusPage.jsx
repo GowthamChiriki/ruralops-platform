@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "../styles/StatusCheck.css";
@@ -10,17 +10,34 @@ const API =
 const ACCENTS = ["tg", "tb", "am", "cr", "sl"];
 
 /* ─────────────────────────────────────────
+   Theme
+───────────────────────────────────────── */
+function useTheme() {
+  const [dark, setDark] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const s = localStorage.getItem("ruralops-theme");
+    if (s) return s === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    localStorage.setItem("ruralops-theme", dark ? "dark" : "light");
+  }, [dark]);
+  return [dark, setDark];
+}
+
+/* ─────────────────────────────────────────
    Status display config
 ───────────────────────────────────────── */
 const STATUS_CONFIG = {
-  APPROVED:            { label: "Approved",            pillCls: "pill--approved",   icon: "✦" },
-  ACTIVE:              { label: "Active",              pillCls: "pill--approved",   icon: "✦" },
-  PENDING:             { label: "Pending Review",      pillCls: "pill--pending",    icon: "◈" },
-  PENDING_APPROVAL:    { label: "Pending Approval",    pillCls: "pill--pending",    icon: "◈" },
-  PENDING_ACTIVATION:  { label: "Awaiting Activation", pillCls: "pill--activation", icon: "◉" },
-  REJECTED:            { label: "Rejected",            pillCls: "pill--rejected",   icon: "✕" },
-  SUSPENDED:           { label: "Suspended",           pillCls: "pill--suspended",  icon: "⊘" },
-  INACTIVE:            { label: "Inactive",            pillCls: "pill--suspended",  icon: "⊘" },
+  APPROVED:           { label: "Approved",            pillCls: "pill--approved",   icon: "✦", color: "tg" },
+  ACTIVE:             { label: "Active",              pillCls: "pill--approved",   icon: "✦", color: "tg" },
+  PENDING:            { label: "Pending Review",      pillCls: "pill--pending",    icon: "◈", color: "am" },
+  PENDING_APPROVAL:   { label: "Pending Approval",    pillCls: "pill--pending",    icon: "◈", color: "am" },
+  PENDING_ACTIVATION: { label: "Awaiting Activation", pillCls: "pill--activation", icon: "◉", color: "ac" },
+  REJECTED:           { label: "Rejected",            pillCls: "pill--rejected",   icon: "✕", color: "cr" },
+  SUSPENDED:          { label: "Suspended",           pillCls: "pill--suspended",  icon: "⊘", color: "sl" },
+  INACTIVE:           { label: "Inactive",            pillCls: "pill--suspended",  icon: "⊘", color: "sl" },
 };
 
 const getStatus = (s) =>
@@ -28,16 +45,17 @@ const getStatus = (s) =>
     label: s ?? "Unknown",
     pillCls: "pill--unknown",
     icon: "?",
+    color: "sl",
   };
 
 /* ─────────────────────────────────────────
-   Next action human-readable labels
+   Next action labels
 ───────────────────────────────────────── */
 const NEXT_ACTION_LABELS = {
-  REQUEST_ACTIVATION: "Request Activation",
-  LOGIN:              "Proceed to Login",
-  CONTACT_SUPPORT:    "Contact Support",
-  WAIT_FOR_APPROVAL:  "Awaiting Council Review",
+  REQUEST_ACTIVATION:         "Request Activation",
+  LOGIN:                      "Proceed to Login",
+  CONTACT_SUPPORT:            "Contact Support",
+  WAIT_FOR_APPROVAL:          "Awaiting Council Review",
   REGISTER_TO_CREATE_ACCOUNT: "Register an Account",
 };
 
@@ -64,7 +82,6 @@ const TICKER_ITEMS = [
 function useCopyToClipboard(timeout = 2000) {
   const [copied, setCopied] = useState(false);
   const timerRef = useRef(null);
-
   const copy = useCallback((text) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -72,7 +89,6 @@ function useCopyToClipboard(timeout = 2000) {
       timerRef.current = setTimeout(() => setCopied(false), timeout);
     });
   }, [timeout]);
-
   return { copied, copy };
 }
 
@@ -81,27 +97,24 @@ function useCopyToClipboard(timeout = 2000) {
 ───────────────────────────────────────── */
 function ActivationKeyRow({ activationKey }) {
   const { copied, copy } = useCopyToClipboard();
-
   if (!activationKey) return null;
-
   return (
-    <div className="sc-acct-card__activation-row">
-      <div className="sc-acct-card__activation-header">
-        <span className="sc-acct-card__lbl">Activation Key</span>
-        <span className="sc-acct-card__activation-badge">Secure Token</span>
+    <div className="sc-activation-row">
+      <div className="sc-activation-header">
+        <span className="sc-field-label">Activation Key</span>
+        <span className="sc-secure-badge">Secure Token</span>
       </div>
-      <div className="sc-acct-card__activation-key-wrap">
-        <code className="sc-acct-card__activation-key">{activationKey}</code>
+      <div className="sc-key-wrap">
+        <code className="sc-key-code">{activationKey}</code>
         <button
-          className={`sc-acct-card__copy-btn ${copied ? "sc-acct-card__copy-btn--copied" : ""}`}
+          className={`sc-copy-btn ${copied ? "sc-copy-btn--copied" : ""}`}
           onClick={() => copy(activationKey)}
-          title="Copy activation key"
           aria-label="Copy activation key to clipboard"
         >
           {copied ? "✓ Copied" : "Copy"}
         </button>
       </div>
-      <p className="sc-acct-card__activation-hint">
+      <p className="sc-key-hint">
         Use this key to activate your account. Do not share it publicly.
       </p>
     </div>
@@ -116,7 +129,6 @@ function InlineKeyRequestPanel({ account, onKeyDispatched }) {
   const [dispatched, setDispatched] = useState(false);
   const [error,      setError]      = useState(null);
 
-  // Derive account type for backend
   const toBackendType = (id) => {
     if (!id) return null;
     const prefix = id.substring(0, 4).toUpperCase();
@@ -132,15 +144,11 @@ function InlineKeyRequestPanel({ account, onKeyDispatched }) {
       const res = await fetch(`${API}/activation/request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountType: backendType,
-          accountId: account.accountId,
-        }),
+        body: JSON.stringify({ accountType: backendType, accountId: account.accountId }),
       });
       const text = await res.text();
       if (!res.ok) throw new Error(text || "Request failed");
       setDispatched(true);
-      // Re-fetch updated key from status (parent will re-check status)
       onKeyDispatched();
     } catch (err) {
       setError(err.message || "Failed to dispatch key. Try again.");
@@ -150,44 +158,36 @@ function InlineKeyRequestPanel({ account, onKeyDispatched }) {
 
   if (dispatched) {
     return (
-      <div className="sc-ikd-success">
-        <p className="sc-ikd-success-title">✦ Key Dispatched</p>
-        <p className="sc-ikd-success-sub">
-          A fresh activation key has been issued. Refresh status to view it below.
-        </p>
+      <div className="sc-dispatch-success">
+        <div className="sc-dispatch-success-icon">✦</div>
+        <div>
+          <p className="sc-dispatch-success-title">Key Dispatched</p>
+          <p className="sc-dispatch-success-sub">
+            A fresh activation key has been issued. Refresh status to view it.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="sc-inline-keydispatch">
-      <div className="sc-ikd-header">
-        <div className="sc-ikd-icon">◉</div>
+    <div className="sc-dispatch-panel">
+      <div className="sc-dispatch-header">
+        <div className="sc-dispatch-icon">◉</div>
         <div>
-          <p className="sc-ikd-title">Request Activation Key</p>
-          <p className="sc-ikd-sub">
-            No key issued yet, or yours expired. Summon a fresh key now.
-          </p>
+          <p className="sc-dispatch-title">Request Activation Key</p>
+          <p className="sc-dispatch-sub">No key issued yet, or yours expired. Summon a fresh key now.</p>
         </div>
       </div>
-
       {error && (
-        <div className="sc-ikd-exhausted">
-          <span className="sc-ikd-exhausted-icon">✕</span>
+        <div className="sc-dispatch-error">
+          <span>✕</span>
           <span>{error}</span>
         </div>
       )}
-
-      <button
-        className="sc-ikd-btn sc-ikd-btn--dispatch"
-        onClick={handleRequest}
-        disabled={loading}
-      >
+      <button className="sc-dispatch-btn" onClick={handleRequest} disabled={loading}>
         {loading ? (
-          <>
-            <span className="sc-ikd-spinner" />
-            Dispatching…
-          </>
+          <><span className="sc-spin" /> Dispatching…</>
         ) : (
           <>◉ Dispatch Activation Key</>
         )}
@@ -205,59 +205,52 @@ function AccountResultCard({ account, onActivate, onKeyDispatched, index }) {
   const isPendingActivation = account.status === "PENDING_ACTIVATION";
 
   return (
-    <div className={`sc-acct-card sc-acct-card--${accent}`}>
-      <div className="sc-acct-card__bar" />
+    <div className={`sc-card sc-card--${accent}`}>
+      <div className="sc-card-bar" />
 
-      {/* Header */}
-      <div className="sc-acct-card__header">
-        <span className={`sc-acct-card__type-badge sc-acct-card__type-badge--${accent}`}>
-          {account.accountType}
-        </span>
-        <span className={`sc-acct-card__status-pill ${cfg.pillCls}`}>
+      <div className="sc-card-header">
+        <div className="sc-card-header-left">
+          <span className={`sc-type-badge sc-type-badge--${accent}`}>
+            {account.accountType}
+          </span>
+        </div>
+        <span className={`sc-status-pill ${cfg.pillCls}`}>
           <span className="sc-pill-icon">{cfg.icon}</span>
           {cfg.label}
         </span>
       </div>
 
-      {/* Body rows */}
-      <div className="sc-acct-card__body">
-        <div className="sc-acct-card__row">
-          <span className="sc-acct-card__lbl">Account ID</span>
-          <span className="sc-acct-card__val sc-mono">{account.accountId ?? "—"}</span>
+      <div className="sc-card-body">
+        <div className="sc-card-row">
+          <span className="sc-field-label">Account ID</span>
+          <span className="sc-field-value sc-mono">{account.accountId ?? "—"}</span>
         </div>
 
         {account.nextAction && (
-          <div className="sc-acct-card__row">
-            <span className="sc-acct-card__lbl">Next Step</span>
-            <span className={`sc-acct-card__val sc-acct-card__next-action sc-next-action--${account.nextAction}`}>
+          <div className="sc-card-row">
+            <span className="sc-field-label">Next Step</span>
+            <span className={`sc-field-value sc-next-action sc-next-action--${account.nextAction}`}>
               {humanizeAction(account.nextAction)}
             </span>
           </div>
         )}
 
-        {/* Activation key — shown when status is PENDING_ACTIVATION and key exists */}
         {isPendingActivation && account.activationKey && (
           <ActivationKeyRow activationKey={account.activationKey} />
         )}
 
-        {/* Inline key request — shown when pending activation but no key yet */}
         {isPendingActivation && !account.activationKey && (
-          <InlineKeyRequestPanel
-            account={account}
-            onKeyDispatched={() => onKeyDispatched(account)}
-          />
+          <InlineKeyRequestPanel account={account} onKeyDispatched={() => onKeyDispatched(account)} />
         )}
       </div>
 
-      {/* CTA — activate button (only shown when key is present) */}
       {account.canActivate && account.activationKey && (
-        <button
-          className={`sc-acct-card__cta sc-acct-card__cta--${accent}`}
-          onClick={() => onActivate(account)}
-        >
-          <span className="sc-cta-icon">◉</span>
+        <button className={`sc-card-cta sc-card-cta--${accent}`} onClick={() => onActivate(account)}>
+          <span>◉</span>
           Activate Account
-          <span className="sc-cta-arrow">→</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft:"auto"}}>
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
         </button>
       )}
     </div>
@@ -265,38 +258,42 @@ function AccountResultCard({ account, onActivate, onKeyDispatched, index }) {
 }
 
 /* ─────────────────────────────────────────
-   Main page component
+   Main Page
 ───────────────────────────────────────── */
 export default function CitizenStatusPage() {
   const navigate = useNavigate();
+  const [dark, setDark] = useTheme();
+
   const [phone,    setPhone]    = useState("");
   const [results,  setResults]  = useState([]);
   const [loading,  setLoading]  = useState(false);
   const [searched, setSearched] = useState(false);
   const [toasts,   setToasts]   = useState([]);
+  const [phoneErr, setPhoneErr] = useState("");
 
-  /* ── Toast helpers ── */
-  const addToast = useCallback((type, label, sub) => {
+  /* Toasts */
+  const addToast = useCallback((type, ttl, sub) => {
     const id = Date.now();
-    setToasts((p) => [...p, { id, type, label, sub, phase: "entering" }]);
+    setToasts((p) => [...p, { id, type, ttl, sub, out: false }]);
     setTimeout(() => {
-      setToasts((p) =>
-        p.map((t) => (t.id === id ? { ...t, phase: "leaving" } : t))
-      );
-      setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 360);
-    }, 5000);
+      setToasts((p) => p.map((t) => (t.id === id ? { ...t, out: true } : t)));
+      setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 320);
+    }, 4000);
   }, []);
 
-  const dismiss = (id) => {
-    setToasts((p) =>
-      p.map((t) => (t.id === id ? { ...t, phase: "leaving" } : t))
-    );
-    setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 360);
+  const dismissToast = (id) => {
+    setToasts((p) => p.map((t) => (t.id === id ? { ...t, out: true } : t)));
+    setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 320);
   };
 
-  /* ── Status check ── */
+  const vPhone = (v) => !v ? "Phone number is required." : !/^[6-9]\d{9}$/.test(v) ? "Enter a valid 10-digit number starting with 6–9." : "";
+
+  /* Status check */
   const checkStatus = async (e) => {
     e?.preventDefault();
+    const pe = vPhone(phone);
+    setPhoneErr(pe);
+    if (pe) { addToast("error", "Validation Error", pe); return; }
     setLoading(true);
     setResults([]);
     setSearched(false);
@@ -316,22 +313,16 @@ export default function CitizenStatusPage() {
 
       const data = await res.json();
       const accounts = Array.isArray(data) ? data : [data];
-
       setResults(accounts);
       setSearched(true);
 
       if (accounts.length === 0) {
         addToast("error", "No Record Found", "No account registered with this number.");
       } else {
-        const activationPending = accounts.filter(
-          (a) => a.status === "PENDING_ACTIVATION"
-        ).length;
-
+        const activationPending = accounts.filter((a) => a.status === "PENDING_ACTIVATION").length;
         addToast(
           "success",
-          accounts.length === 1
-            ? "Status Retrieved"
-            : `${accounts.length} Accounts Found`,
+          accounts.length === 1 ? "Status Retrieved" : `${accounts.length} Accounts Found`,
           activationPending > 0
             ? `${activationPending} account(s) ready for activation.`
             : accounts.length === 1
@@ -340,22 +331,13 @@ export default function CitizenStatusPage() {
         );
       }
     } catch (err) {
-      console.error("Status check failed:", err);
-      addToast(
-        "error",
-        "Raven Unreachable",
-        "Unable to fetch status. Verify your mobile number."
-      );
+      addToast("error", "Raven Unreachable", "Unable to fetch status. Verify your mobile number.");
     }
-
     setLoading(false);
   };
 
-  /* ── Re-check status after key dispatch to pick up the newly issued key ── */
   const handleKeyDispatched = useCallback(async (account) => {
-    // Small delay so the backend has time to persist the new token
     await new Promise((r) => setTimeout(r, 800));
-
     try {
       const res = await fetch(`${API}/status/check`, {
         method: "POST",
@@ -366,269 +348,283 @@ export default function CitizenStatusPage() {
       const data = await res.json();
       const accounts = Array.isArray(data) ? data : [data];
       setResults(accounts);
-
       const updated = accounts.find((a) => a.accountId === account.accountId);
       if (updated?.activationKey) {
         addToast("success", "Key Received", "Your activation key is now displayed below.");
       } else {
-        addToast("info", "Key Dispatched", "Key sent to your registered contact. Refresh to view it here.");
+        addToast("info", "Key Dispatched", "Key sent to your registered contact.");
       }
     } catch {
       addToast("info", "Key Dispatched", "Your activation key was sent. Re-check status to see it.");
     }
   }, [phone, addToast]);
 
-  /* ── Navigate to activate page, pre-filling accountId and key ── */
   const handleActivate = useCallback((account) => {
     const params = new URLSearchParams({ accountId: account.accountId });
     if (account.activationKey) params.set("key", account.activationKey);
     navigate(`/activate-account?${params.toString()}`);
   }, [navigate]);
 
-  /* ── Render ── */
   return (
     <>
-      <Navbar />
+      <div className="sc-page">
+        {/* Ambient orbs */}
+        <div className="sc-orb sc-orb-1" />
+        <div className="sc-orb sc-orb-2" />
 
-      <main className="status-page">
+        <Navbar />
 
-        {/* ══ LEFT ══ */}
-        <div className="status-left">
+        {/* Theme toggle */}
+        <button
+          className="sc-theme-btn"
+          onClick={() => setDark((d) => !d)}
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {dark ? (
+            <>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+              Light
+            </>
+          ) : (
+            <>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+              Dark
+            </>
+          )}
+        </button>
 
-          {/* Eyebrow */}
-          <div className="sc-eyebrow">
-            <span className="sc-eyebrow__dot" />
-            RuralOps Verification Chamber
-          </div>
+        <div className="sc-body">
+          {/* ══ LEFT ══ */}
+          <div className="sc-left">
 
-          {/* Title */}
-          <div className="sc-title-block">
-            <h1 className="sc-title">
-              Consult the
-              <span className="sc-title__shimmer">Realm&apos;s Registry</span>
-            </h1>
-            <p className="sc-subtitle">
-              After swearing your registration oath, the Village Administrative Officer
-              reviews your claim. Enter your phone number to see the council&apos;s verdict.
-            </p>
+            {/* Status pill */}
+            <div className="sc-status-pill-wrap">
+              <span className="sc-live-dot" />
+              <span>Verification Chamber · RuralOps v2.4</span>
+            </div>
 
-            <div className="sc-info-points">
+            {/* Hero */}
+            <div className="sc-hero">
+              <h1 className="sc-hero-title">
+                Consult the<br />
+                <em>Realm's Registry</em>
+              </h1>
+              <p className="sc-hero-sub">
+                After swearing your registration oath, the Village Administrative Officer
+                reviews your claim. Enter your registered phone number to see the council's verdict on your account.
+              </p>
+            </div>
+
+            {/* Info steps */}
+            <div className="sc-steps">
               {[
-                { cls: "sc-dot--tg", text: "Submit your registration scroll"   },
-                { cls: "sc-dot--am", text: "VAO council reviews your claim"    },
-                { cls: "sc-dot--tb", text: "Account approved and unsealed"     },
-                { cls: "sc-dot--cr", text: "Sovereign protection of your data" },
-              ].map((pt, i) => (
-                <div key={i} className="sc-info-point">
-                  <span className={`sc-dot ${pt.cls}`} />
-                  {pt.text}
+                { cls: "tg", icon: "📝", label: "Submit your registration scroll"   },
+                { cls: "am", icon: "📋", label: "VAO council reviews your claim"    },
+                { cls: "tb", icon: "✦",  label: "Account approved & unsealed"       },
+                { cls: "cr", icon: "🔒", label: "Sovereign protection of your data" },
+              ].map((s, i) => (
+                <div key={i} className="sc-step">
+                  <div className={`sc-step-ic sc-step-ic--${s.cls}`}>{s.icon}</div>
+                  <span className="sc-step-text">{s.label}</span>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Live ticker */}
-          <div className="sc-ticker">
-            <div className="sc-ticker__badge">
-              <span className="sc-ticker__live-dot" />
-              LIVE
+            {/* Live ticker */}
+            <div className="sc-ticker">
+              <div className="sc-ticker-badge">
+                <span className="sc-ticker-dot" />
+                LIVE
+              </div>
+              <div className="sc-ticker-track">
+                <div className="sc-ticker-inner">
+                  {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+                    <div key={i} className="sc-ticker-item">
+                      <span className="sc-ticker-state">{item.state}</span>
+                      <span className={`sc-dot ${item.dotCls}`} />
+                      {item.text}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="sc-ticker__track">
-              <div className="sc-ticker__inner">
-                {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-                  <div key={i} className="sc-ticker__item">
-                    <span className="sc-ticker__state">{item.state}</span>
-                    <span className={`sc-dot ${item.dotCls}`} style={{ width: 5, height: 5 }} />
-                    {item.text}
+
+            {/* Results */}
+            <div className="sc-results">
+              {!searched && !loading && (
+                <div className="sc-results-empty">
+                  <span className="sc-results-empty-icon">⚜</span>
+                  <div>
+                    <p className="sc-results-empty-title">Your verdict awaits</p>
+                    <p className="sc-results-empty-sub">Enter your registered phone number and submit to see account status here.</p>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {loading && (
+                <div className="sc-results-loading">
+                  <div className="sc-ring">
+                    <div className="sc-ring-outer" />
+                    <div className="sc-ring-inner" />
+                  </div>
+                  <p className="sc-results-empty-title" style={{margin:0}}>Consulting the rolls…</p>
+                </div>
+              )}
+
+              {searched && results.length === 0 && (
+                <AccountResultCard
+                  account={{ accountType:"NO RECORD", accountId:phone, status:"REJECTED", nextAction:"REGISTER_TO_CREATE_ACCOUNT", canActivate:false, activationKey:null }}
+                  onActivate={() => {}} onKeyDispatched={() => {}} index={0}
+                />
+              )}
+
+              {results.length > 1 && (
+                <div className="sc-multi-label">
+                  <span className="sc-dot sc-dot--tg" />
+                  {results.length} accounts linked to this number
+                </div>
+              )}
+
+              {results.map((account, i) => (
+                <AccountResultCard
+                  key={account.accountId ?? i}
+                  account={account}
+                  onActivate={handleActivate}
+                  onKeyDispatched={handleKeyDispatched}
+                  index={i}
+                />
+              ))}
             </div>
+
           </div>
 
-          {/* Results area */}
-          <div className="sc-results-area">
+          {/* ══ RIGHT — sticky form ══ */}
+          <div className="sc-right">
+            <div className="sc-form-card">
+              <div className="sc-form-card-bar" />
 
-            {!searched && !loading && (
-              <div className="sc-results-placeholder">
-                <span className="sc-placeholder__icon">⚜</span>
-                <div className="sc-placeholder__text">
-                  <p className="sc-placeholder__title">Your verdict awaits</p>
-                  <p className="sc-placeholder__sub">
-                    Enter your registered phone number and submit to see account status here.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {loading && (
-              <div className="sc-loading-wrap">
-                <div className="sc-loading-ring">
-                  <div className="sc-loading-ring__outer" />
-                  <div className="sc-loading-ring__inner" />
-                </div>
-                <p className="sc-placeholder__title" style={{ margin: 0 }}>
-                  Consulting the rolls…
+              <div className="sc-form-card-head">
+                <span className="sc-form-card-eyebrow">Account Lookup</span>
+                <h2 className="sc-form-card-title">Check Account Status</h2>
+                <p className="sc-form-card-desc">
+                  Present your bonded phone number to retrieve the council's verdict on your registration.
                 </p>
               </div>
-            )}
 
-            {searched && results.length === 0 && (
-              <AccountResultCard
-                account={{
-                  accountType: "NO RECORD",
-                  accountId:   phone,
-                  status:      "REJECTED",
-                  nextAction:  "REGISTER_TO_CREATE_ACCOUNT",
-                  canActivate: false,
-                  activationKey: null,
-                }}
-                onActivate={() => {}}
-                onKeyDispatched={() => {}}
-                index={0}
-              />
-            )}
+              <form className="sc-form" onSubmit={checkStatus} noValidate>
+                <div className={`sc-field ${phoneErr ? "sc-field--err" : ""}`}>
+                  <label htmlFor="sc-phone">Registered Phone Number</label>
+                  <input
+                    id="sc-phone"
+                    type="tel"
+                    placeholder="e.g. 9876543210"
+                    value={phone}
+                    onChange={(e) => { setPhone(e.target.value); if (phoneErr) setPhoneErr(vPhone(e.target.value)); }}
+                    onBlur={(e) => setPhoneErr(vPhone(e.target.value))}
+                    maxLength="10"
+                    autoComplete="tel"
+                  />
+                  {phoneErr && <span className="sc-field-err-msg" role="alert">⚠ {phoneErr}</span>}
+                </div>
 
-            {results.length > 1 && (
-              <div className="sc-multi-label">
-                <span className="sc-dot sc-dot--tg" />
-                {results.length} accounts linked to this number
-              </div>
-            )}
+                <button type="submit" className="sc-submit-btn" disabled={loading}>
+                  {loading ? (
+                    <><span className="sc-spin" aria-hidden="true" /> Consulting Rolls…</>
+                  ) : (
+                    <>
+                      <span>⚜</span>
+                      Reveal Status
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft:"auto"}}>
+                        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </form>
 
-            {results.map((account, i) => (
-              <AccountResultCard
-                key={account.accountId ?? i}
-                account={account}
-                onActivate={handleActivate}
-                onKeyDispatched={handleKeyDispatched}
-                index={i}
-              />
-            ))}
-
-          </div>
-        </div>
-
-        {/* ══ RIGHT — sticky form ══ */}
-        <div className="status-right">
-          <div className="sc-form-card">
-            <div className="sc-form-card__top-bar" />
-
-            <h2 className="sc-form-card__title">Check Account Status</h2>
-
-            <p className="sc-form-card__desc">
-              Present your bonded phone number to retrieve the council&apos;s verdict.
-            </p>
-
-            <form className="sc-form" onSubmit={checkStatus} noValidate>
-              <div className="sc-form-group">
-                <label htmlFor="sc-phone">Registered Phone Number</label>
-                <input
-                  id="sc-phone"
-                  type="tel"
-                  placeholder="e.g. 9876543210"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  pattern="[6-9][0-9]{9}"
-                  maxLength="10"
-                  required
-                  autoComplete="tel"
-                />
+              {/* Legend */}
+              <div className="sc-legend">
+                <p className="sc-legend-title">Account States</p>
+                <div className="sc-legend-grid">
+                  {[
+                    { pill: "pill--approved",   icon: "✦", label: "Active"             },
+                    { pill: "pill--pending",     icon: "◈", label: "Pending Approval"   },
+                    { pill: "pill--activation",  icon: "◉", label: "Pending Activation" },
+                    { pill: "pill--rejected",    icon: "✕", label: "Rejected"           },
+                  ].map((s, i) => (
+                    <div key={i} className="sc-legend-item">
+                      <span className={`sc-legend-pill ${s.pill}`}>{s.icon}</span>
+                      <span className="sc-legend-label">{s.label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <button type="submit" className="sc-submit-btn" disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="sc-btn-spinner" />
-                    Consulting Rolls…
-                  </>
-                ) : (
-                  <>
-                    <span>⚜</span>
-                    Reveal Status
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Status legend */}
-            <div className="sc-form-card__legend">
-              <p className="sc-form-card__legend-title">Account States</p>
-              <div className="sc-legend-grid">
+              {/* Steps */}
+              <div className="sc-form-steps">
                 {[
-                  { pill: "pill--approved",   icon: "✦", label: "Active"             },
-                  { pill: "pill--pending",     icon: "◈", label: "Pending Approval"   },
-                  { pill: "pill--activation",  icon: "◉", label: "Pending Activation" },
-                  { pill: "pill--rejected",    icon: "✕", label: "Rejected"           },
+                  { cls: "tg", text: "Submit scroll" },
+                  { cls: "am", text: "VAO reviews"   },
+                  { cls: "tb", text: "Approved"      },
+                  { cls: "cr", text: "Data secured"  },
                 ].map((s, i) => (
-                  <div key={i} className="sc-legend-item">
-                    <span className={`sc-legend-pill ${s.pill}`}>
-                      {s.icon}
-                    </span>
-                    <span className="sc-legend-label">{s.label}</span>
+                  <div key={i} className="sc-form-step">
+                    <span className={`sc-dot sc-dot--${s.cls}`} />
+                    {s.text}
                   </div>
                 ))}
               </div>
             </div>
-
-            <div className="sc-form-card__info">
-              {[
-                { cls: "sc-dot--tg", text: "Submit scroll" },
-                { cls: "sc-dot--am", text: "VAO reviews"   },
-                { cls: "sc-dot--tb", text: "Approved"       },
-                { cls: "sc-dot--cr", text: "Data secured"   },
-              ].map((s, i) => (
-                <div key={i} className="sc-form-card__step">
-                  <span className={`sc-form-card__step-dot sc-dot ${s.cls}`} />
-                  {s.text}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
-      </main>
+        {/* Footer */}
+        <footer className="sc-footer">
+          <div className="sc-footer-brand">
+            <strong>RuralOps Platform</strong>
+            <span>Digital Infrastructure for Rural Governance</span>
+          </div>
+          <div className="sc-footer-copy">© 2026 RuralOps — AKSHAY PODENDLA</div>
+          <nav className="sc-footer-nav">
+            {["Privacy", "Security", "Support"].map((l) => (
+              <a key={l} href="#">{l}</a>
+            ))}
+          </nav>
+        </footer>
 
-      {/* Footer */}
-      <footer className="citizen-footer">
-        <div className="footer-left">
-          <strong>RuralOps Platform</strong>
-          <span>Digital Infrastructure for Rural Governance</span>
-        </div>
-        <div className="footer-center">© 2026 RuralOps — AKSHAY PODENDLA</div>
-        <div className="footer-links">
-          {["Privacy", "Security", "Support"].map((l) => (
-            <a key={l} href="#">{l}</a>
-          ))}
-        </div>
-      </footer>
+      </div>
 
-      {/* Toast container */}
-      <div className="sc-toast-container" role="region" aria-live="polite">
+      {/* Toasts */}
+      <div className="sc-toasts" role="region" aria-label="Notifications" aria-live="polite">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`sc-toast sc-toast--${t.type} sc-toast--${t.phase}`}
-            onClick={() => dismiss(t.id)}
+            className={`sc-toast sc-toast--${t.type} ${t.out ? "tout" : "tin"}`}
+            onClick={() => dismissToast(t.id)}
           >
-            <div className="sc-toast-accent" />
-            <div className="sc-toast-icon-wrap">
-              <div className="sc-toast-icon">
-                {t.type === "success" ? "✦" : t.type === "error" ? "✕" : "◈"}
+            <div className="sc-toast-shell">
+              <div className="sc-toast-ic">
+                {t.type === "success" ? "✓" : t.type === "error" ? "✕" : "i"}
               </div>
-              <span className="sc-toast-pulse" />
+              <div className="sc-toast-body">
+                <div className="sc-toast-ttl">{t.ttl}</div>
+                <div className="sc-toast-msg">{t.sub}</div>
+              </div>
+              <button
+                className="sc-toast-close"
+                onClick={(e) => { e.stopPropagation(); dismissToast(t.id); }}
+                aria-label="Dismiss"
+              >×</button>
             </div>
-            <div className="sc-toast-body">
-              <p className="sc-toast-label">{t.label}</p>
-              <p className="sc-toast-sub">{t.sub}</p>
-            </div>
-            <button
-              className="sc-toast-dismiss"
-              onClick={(e) => { e.stopPropagation(); dismiss(t.id); }}
-              aria-label="Dismiss"
-            >
-              ×
-            </button>
+            {!t.out && <div className="sc-toast-bar" />}
           </div>
         ))}
       </div>

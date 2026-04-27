@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import "../Styles/CitizenRegistration.css";
 
@@ -52,13 +52,13 @@ const villages = [
    VALIDATION
 ───────────────────────────────────────── */
 const validators = {
-  fullName:        (v) => v.trim().length < 2      ? "Full name must be at least 2 characters."    : "",
-  fatherName:      (v) => v.trim().length < 2      ? "Father's name must be at least 2 characters." : "",
-  aadhaarNumber:   (v) => !/^\d{12}$/.test(v)      ? "Aadhaar must be exactly 12 digits."          : "",
-  rationCardNumber:(v) => v.trim().length < 3      ? "Enter a valid ration card number."           : "",
-  phoneNumber:     (v) => !/^[6-9]\d{9}$/.test(v) ? "Phone must be 10 digits starting with 6–9." : "",
-  email:           (v) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "Enter a valid email address." : "",
-  villageId:       (v) => !v                       ? "Please select your village."                 : "",
+  fullName:         v => v.trim().length < 2      ? "Full name must be at least 2 characters."     : "",
+  fatherName:       v => v.trim().length < 2      ? "Father's name must be at least 2 characters." : "",
+  aadhaarNumber:    v => !/^\d{12}$/.test(v)      ? "Aadhaar must be exactly 12 digits."           : "",
+  rationCardNumber: v => v.trim().length < 3      ? "Enter a valid ration card number."            : "",
+  phoneNumber:      v => !/^[6-9]\d{9}$/.test(v) ? "Phone must be 10 digits starting with 6–9."  : "",
+  email:            v => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "Enter a valid email address."  : "",
+  villageId:        v => !v                       ? "Please select your village."                  : "",
 };
 
 const STEPS = [
@@ -67,119 +67,109 @@ const STEPS = [
   { id: 3, label: "Confirm"   },
 ];
 const STEP_FIELDS = {
-  1: ["fullName","fatherName","phoneNumber","email"],
-  2: ["aadhaarNumber","rationCardNumber"],
+  1: ["fullName", "fatherName", "phoneNumber", "email"],
+  2: ["aadhaarNumber", "rationCardNumber"],
   3: ["villageId"],
 };
 const EMPTY_FORM = {
-  fullName:"", fatherName:"", aadhaarNumber:"",
-  rationCardNumber:"", phoneNumber:"", email:"", villageId:"",
+  fullName: "", fatherName: "", aadhaarNumber: "",
+  rationCardNumber: "", phoneNumber: "", email: "", villageId: "",
 };
-
-/* ─────────────────────────────────────────
-   TICKER DATA
-───────────────────────────────────────── */
-const TICKER_ITEMS = [
-  { state: "PEDANANDI PALLI", dot: "green", text: "12 new citizens registered today" },
-  { state: "KALIGOTLA",       dot: "blue",  text: "VAO verification pending: 3 cases" },
-  { state: "TARUVA",          dot: "green", text: "Welfare disbursement: ₹48,000" },
-  { state: "MUSHIDIPALLE",    dot: "blue",  text: "Land records updated" },
-  { state: "SAMMEDA",         dot: "green", text: "8 approvals completed" },
-  { state: "GARISINGI",       dot: "red",   text: "2 document re-submissions required" },
-  { state: "DEVARAPALLE",     dot: "green", text: "Census sync: 99.2% complete" },
-  { state: "NAGAYYAPETA",     dot: "gold",  text: "Scheme enrollment open till month-end" },
-];
 
 /* ─────────────────────────────────────────
    TOAST SYSTEM
 ───────────────────────────────────────── */
-let _tid = 0;
-
-function ToastItem({ t, onDone }) {
-  const [phase,    setPhase]    = useState("toast-entering");
-  const [progress, setProgress] = useState(100);
-  const rafRef   = useRef(null);
-  const startRef = useRef(Date.now());
-  const dur      = t.duration ?? 5000;
-
-  const dismiss = useCallback(() => {
-    cancelAnimationFrame(rafRef.current);
-    setPhase("toast-leaving");
-    setTimeout(() => onDone(t.id), 200);
-  }, [t.id, onDone]);
-
-  useEffect(() => {
-    const tick = () => {
-      const pct = Math.max(0, 100 - ((Date.now() - startRef.current) / dur) * 100);
-      setProgress(pct);
-      if (pct <= 0) { dismiss(); return; }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [dismiss, dur]);
-
-  const typeClass = `toast-${t.type}`;
-
-  return (
-    <div className={`toast-item ${typeClass} ${phase}`}>
-      <div className="toast-top-line" />
-      <div className="toast-icon-wrap">
-        <div className="toast-icon">{t.icon}</div>
-        <span className="toast-pulse" />
-      </div>
-      <div className="toast-body">
-        <span className="toast-label">{t.label}</span>
-        <span className="toast-sub">{t.sub}</span>
-      </div>
-      <button
-        className="toast-dismiss"
-        onClick={e => { e.stopPropagation(); dismiss(); }}
-        aria-label="Dismiss notification"
-      >✕</button>
-      <div
-        className="toast-progress"
-        style={{ transform: `scaleX(${progress / 100})` }}
-      />
-    </div>
-  );
-}
-
-function useToast() {
+function useToasts() {
   const [toasts, setToasts] = useState([]);
-  const push = useCallback((type, label, sub, icon, dur) => {
-    const ICONS = { success: "✓", error: "✕", info: "→", worker: "◎" };
-    setToasts(p => [...p, {
-      id: ++_tid, type, label, sub,
-      icon: icon ?? ICONS[type] ?? "→",
-      duration: dur ?? 5000,
-    }]);
+
+  const add = useCallback((type, ttl, sub) => {
+    const id = Date.now() + Math.random();
+    setToasts(p => [...p, { id, type, ttl, sub, out: false }]);
+    setTimeout(() => {
+      setToasts(p => p.map(t => t.id === id ? { ...t, out: true } : t));
+      setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 350);
+    }, 3000);
   }, []);
-  const remove  = useCallback(id => setToasts(p => p.filter(t => t.id !== id)), []);
-  const success = (l, s, i) => push("success", l, s, i);
-  const error   = (l, s, i) => push("error",   l, s, i);
-  const info    = (l, s, i) => push("info",    l, s, i);
-  const worker  = (l, s, i) => push("worker",  l, s, i);
-  return { toasts, remove, success, error, info, worker };
+
+  const dismiss = useCallback(id => {
+    setToasts(p => p.map(t => t.id === id ? { ...t, out: true } : t));
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 350);
+  }, []);
+
+  return {
+    toasts, dismiss,
+    success: (ttl, sub) => add("success", ttl, sub),
+    error:   (ttl, sub) => add("error",   ttl, sub),
+    info:    (ttl, sub) => add("info",    ttl, sub),
+  };
 }
 
 /* ─────────────────────────────────────────
-   THEME TOGGLE
+   THEME HOOK
 ───────────────────────────────────────── */
 function useTheme() {
-  const [theme, setTheme] = useState(() => {
-    try { return localStorage.getItem("ruralops-theme") || "dark"; }
-    catch { return "dark"; }
+  const [dark, setDark] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const s = localStorage.getItem("ruralops-theme");
+    if (s) return s === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
-
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    try { localStorage.setItem("ruralops-theme", theme); } catch {}
-  }, [theme]);
-
-  const toggle = () => setTheme(t => t === "dark" ? "light" : "dark");
-  return { theme, toggle };
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    localStorage.setItem("ruralops-theme", dark ? "dark" : "light");
+  }, [dark]);
+  return [dark, setDark];
 }
+
+/* ─────────────────────────────────────────
+   SVG ICONS
+───────────────────────────────────────── */
+const ArrowRight = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+  </svg>
+);
+const ArrowLeft = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+  </svg>
+);
+const CheckIcon = ({ size = 11 }) => (
+  <svg width={size} height={size} viewBox="0 0 12 12" fill="none">
+    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const ErrIcon = () => (
+  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+    <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.5"/>
+    <path d="M6 4v2.5M6 8.5v.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+const SunIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+);
+const MoonIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+);
+const DocIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+  </svg>
+);
+const ChevronDown = () => (
+  <svg width="11" height="7" viewBox="0 0 11 7" fill="none">
+    <path d="M1 1l4.5 4.5L10 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
 
 /* ─────────────────────────────────────────
    MAIN COMPONENT
@@ -190,19 +180,16 @@ export default function CitizenRegistrationPage() {
   const [touched, setTouched] = useState({});
   const [step,    setStep]    = useState(1);
   const [loading, setLoading] = useState(false);
-  const [toggleKey, setToggleKey] = useState(0);
-  const toast = useToast();
-  const { theme, toggle } = useTheme();
-
-  const handleThemeToggle = () => {
-    toggle();
-    setToggleKey(k => k + 1);
-  };
+  const [dark,    setDark]    = useTheme();
+  const toast = useToasts();
 
   const validateField = (name, value) => validators[name]?.(value) ?? "";
   const validateStep  = stepNum => {
     const errs = {};
-    STEP_FIELDS[stepNum].forEach(f => { const e = validateField(f, form[f]); if (e) errs[f] = e; });
+    STEP_FIELDS[stepNum].forEach(f => {
+      const e = validateField(f, form[f]);
+      if (e) errs[f] = e;
+    });
     return errs;
   };
 
@@ -224,9 +211,9 @@ export default function CitizenRegistrationPage() {
     setErrors(p => ({ ...p, ...stepErrors }));
     if (Object.keys(stepErrors).length === 0) {
       setStep(s => s + 1);
-      toast.info(`Step ${step} Complete`, "Proceeding to the next section.");
+      toast.info(`Step ${step} complete`, "Proceeding to the next section.");
     } else {
-      toast.error("Validation Required", "Please review the highlighted fields.");
+      toast.error("Validation required", "Please review the highlighted fields.");
     }
   };
   const handleBack = () => setStep(s => s - 1);
@@ -234,15 +221,18 @@ export default function CitizenRegistrationPage() {
   const handleSubmit = async e => {
     e.preventDefault();
     const allErrors = {};
-    Object.keys(validators).forEach(f => { const err = validateField(f, form[f]); if (err) allErrors[f] = err; });
+    Object.keys(validators).forEach(f => {
+      const err = validateField(f, form[f]);
+      if (err) allErrors[f] = err;
+    });
     setTouched(Object.fromEntries(Object.keys(validators).map(f => [f, true])));
     setErrors(allErrors);
     if (Object.keys(allErrors).length > 0) {
-      toast.error("Submission Blocked", "Please complete all required fields before proceeding.");
+      toast.error("Submission blocked", "Please complete all required fields.");
       return;
     }
     setLoading(true);
-    toast.info("Submitting Application…", "Transmitting your details to the district registry.");
+    toast.info("Submitting…", "Transmitting your details to the registry.");
     try {
       const response = await fetch("https://ruralops-platform-production.up.railway.app/citizen/register", {
         method: "POST",
@@ -251,265 +241,411 @@ export default function CitizenRegistrationPage() {
       });
       const text = await response.text();
       if (response.ok) {
-        toast.success("Registration Successful", text || "Your record has been entered into the district rolls.");
+        toast.success("Registration complete", text || "Your record has been entered into the district rolls.");
         setForm(EMPTY_FORM); setErrors({}); setTouched({}); setStep(1);
       } else {
-        toast.error("Registration Failed", text || "An error occurred. Please try again.");
+        toast.error("Registration failed", text || "An error occurred. Please try again.");
       }
     } catch {
-      toast.error("Connection Error", "Unable to reach the registration server. Check your connection.");
+      toast.error("Connection error", "Unable to reach the registration server.");
     }
     setLoading(false);
   };
 
-  const field = (name, label, inputProps = {}) => (
-    <div className={`form-group${errors[name] && touched[name] ? " field-error" : ""}`}>
-      <label htmlFor={name}>{label}</label>
-      <input
-        id={name} name={name} value={form[name]}
-        onChange={handleChange} onBlur={handleBlur}
-        aria-describedby={`${name}-err`} {...inputProps}
-      />
-      {touched[name] && errors[name] && (
-        <span className="field-error-msg" id={`${name}-err`} role="alert">{errors[name]}</span>
-      )}
-    </div>
-  );
+  /* Reusable field renderer */
+  const field = (name, label, inputProps = {}) => {
+    const hasErr  = errors[name] && touched[name];
+    const isValid = touched[name] && !errors[name] && form[name];
+    return (
+      <div className={`cr-field${hasErr ? " has-err" : isValid ? " is-valid" : ""}`}>
+        <label htmlFor={name}>{label}</label>
+        <div className="cr-field-wrap">
+          <input
+            id={name} name={name} value={form[name]}
+            onChange={handleChange} onBlur={handleBlur}
+            aria-describedby={`${name}-err`}
+            {...inputProps}
+          />
+          {isValid && (
+            <span className="cr-field-check" aria-hidden="true">
+              <CheckIcon size={12} />
+            </span>
+          )}
+        </div>
+        {hasErr && (
+          <span className="cr-field-err" id={`${name}-err`} role="alert">
+            <ErrIcon />
+            {errors[name]}
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  const progressPercent = ((step - 1) / (STEPS.length - 1)) * 100;
+
+  const features = [
+    {
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      ),
+      title: "Identity Verified",
+      text: "Verified by your Village Administrative Officer"
+    },
+    {
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      ),
+      title: "Transparent Distribution",
+      text: "Auditable welfare distribution across all villages"
+    },
+    {
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+        </svg>
+      ),
+      title: "Instant Access",
+      text: "All village-level governance services in one place"
+    },
+    {
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      ),
+      title: "Data Sovereignty",
+      text: "End-to-end privacy and data protection standards"
+    },
+  ];
 
   return (
     <>
-      <Navbar />
+      <div className="cr-page">
+        {/* Background mesh */}
+        <div className="cr-bg-mesh" aria-hidden="true">
+          <div className="cr-mesh-orb cr-mesh-orb-1" />
+          <div className="cr-mesh-orb cr-mesh-orb-2" />
+          <div className="cr-mesh-orb cr-mesh-orb-3" />
+          <div className="cr-grid-overlay" />
+        </div>
 
-      {/* ── Theme Toggle ── */}
-      <button
-        className="theme-toggle"
-        onClick={handleThemeToggle}
-        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-        title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-      >
-        <span className="theme-toggle-inner" key={toggleKey}>
-          {theme === "dark" ? "○" : "●"}
-        </span>
-      </button>
+        <Navbar />
 
-      {/* ── Toast Portal ── */}
-      <div className="toast-container" role="region" aria-label="Notifications" aria-live="polite">
-        {toast.toasts.map(t => <ToastItem key={t.id} t={t} onDone={toast.remove} />)}
-      </div>
+        {/* Theme toggle */}
+        <button
+          className="cr-theme"
+          onClick={() => setDark(d => !d)}
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          <span className="cr-theme-track">
+            <span className="cr-theme-thumb">
+              {dark ? <SunIcon /> : <MoonIcon />}
+            </span>
+          </span>
+          <span className="cr-theme-label">{dark ? "Light" : "Dark"}</span>
+        </button>
 
-      {/* ══ MAIN PAGE ══ */}
-      <section className="citizen-page">
+        {/* ── BODY ── */}
+        <div className="cr-body">
 
-        {/* ── LEFT PANEL ── */}
-        <div className="citizen-info">
-          <div className="citizen-info-header">
+          {/* ══ LEFT ══ */}
+          <div className="cr-left">
+            <div className="cr-left-inner">
 
-            {/* Eyebrow */}
-            <div className="citizen-eyebrow">
-              <span className="eyebrow-dot" />
-              RuralOps Governance Network
-            </div>
+              {/* Status */}
+              <div className="cr-status">
+                <span className="cr-status-pulse">
+                  <span className="cr-status-dot" />
+                </span>
+                <span className="cr-status-text">Secure Registration Portal · RuralOps v2.4</span>
+              </div>
 
-            <h1>
-              Register as an Official<br />
-              <span className="h1-sub">Village Citizen</span>
-            </h1>
+              {/* Hero */}
+              <div className="cr-hero">
+                <div className="cr-hero-badge">District Registry System</div>
+                <h1>Citizen<br /><em>Registration.</em></h1>
+                <p>
+                  Submit your identity details to the RuralOps district registry.
+                  Upon verification by your Village Administrative Officer, you
+                  will gain access to all rural governance services and welfare programmes.
+                </p>
+              </div>
 
-            <p className="citizen-lead">
-              Submit your identity details to the RuralOps district registry. Upon
-              verification by your Village Administrative Officer, you will gain
-              access to welfare programs, land record services, and all sovereign
-              rural governance benefits.
-            </p>
+              <div className="cr-divider" />
 
-            {/* Info points */}
-            <div className="info-points">
-              {[
-                { icon: "◎", text: "Identity verified by your Village Administrative Officer" },
-                { icon: "⊞", text: "Transparent, auditable welfare distribution" },
-                { icon: "≡", text: "Access to village-level governance services" },
-                { icon: "◈", text: "End-to-end data privacy and sovereignty" },
-              ].map((pt, i) => (
-                <div className="info-point" key={i}>
-                  <span className="info-point-icon">{pt.icon}</span>
-                  <span>{pt.text}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Stats row */}
-            <div className="info-stats">
-              {[
-                { val: "40+",  lbl: "Villages" },
-                { val: "99.2%", lbl: "Sync Rate" },
-                { val: "3",    lbl: "Active Steps" },
-                { val: "24h",  lbl: "Avg. Approval" },
-              ].map((s, i) => (
-                <div className="info-stat" key={i}>
-                  <span className="info-stat-val">{s.val}</span>
-                  <span className="info-stat-lbl">{s.lbl}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Live Ticker */}
-          <div className="lp-live-ticker">
-            <div className="lp-ticker-badge">
-              <span className="lp-ticker-live-dot" />LIVE
-            </div>
-            <div className="lp-ticker-track">
-              <div className="lp-ticker-inner">
-                {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-                  <div className="lp-ticker-item" key={i}>
-                    <span className="lp-ticker-state">{item.state}</span>
-                    <span className={`lp-ticker-dot lp-ticker-dot--${item.dot}`} />
-                    <span>{item.text}</span>
+              {/* Feature points */}
+              <div className="cr-points">
+                {features.map((pt, i) => (
+                  <div
+                    className="cr-point"
+                    key={i}
+                    style={{ animationDelay: `${0.1 + i * 0.08}s` }}
+                  >
+                    <div className="cr-point-ic">{pt.icon}</div>
+                    <div className="cr-point-text">
+                      <span className="cr-point-title">{pt.title}</span>
+                      <span className="cr-point-desc">{pt.text}</span>
+                    </div>
                   </div>
                 ))}
               </div>
+
             </div>
           </div>
 
-        </div>
+          {/* ══ RIGHT CARD ══ */}
+          <div className="cr-card-wrap">
+            <div className="cr-card">
 
-        {/* ── RIGHT: Registration Card ── */}
-        <div className="registration-glass-card">
+              {/* Accent line at very top */}
+              <div className="cr-card-accent-line" />
 
-          <div className="card-header">
-            <h2 className="card-title">
-              <span className="card-title-icon">⚜</span>
-              Citizen Registration
-            </h2>
-            <div className="card-subtitle">
-              DIST. REGISTRY<br />
-              <span style={{ fontFamily: "var(--f-mono)", fontSize: "8px", letterSpacing: ".08em" }}>
-                REG-2026
-              </span>
-            </div>
-          </div>
+              {/* Progress bar */}
+              <div className="cr-progress-bar">
+                <div className="cr-progress-fill" style={{ width: `${progressPercent}%` }} />
+              </div>
 
-          {/* Step Progress */}
-          <div className="step-progress" aria-label="Registration steps">
-            {STEPS.map((s, i) => (
-              <div key={s.id} className="step-progress-item">
-                <div className={`step-circle${step > s.id ? " done" : step === s.id ? " active" : ""}`}>
-                  {step > s.id ? "✓" : s.id}
-                </div>
-                <span className={`step-label${step === s.id ? " active" : ""}`}>{s.label}</span>
-                {i < STEPS.length - 1 && (
-                  <div className={`step-connector${step > s.id ? " done" : ""}`} />
+              {/* Card header */}
+              <div className="cr-card-head">
+                <span className="cr-card-eyebrow">
+                  <span className="cr-eyebrow-line" />
+                  District Registry
+                </span>
+                <h2 className="cr-card-title">Register as Citizen</h2>
+                <p className="cr-card-desc">
+                  Complete all three steps to submit your application to the district registry.
+                </p>
+              </div>
+
+              {/* Step progress */}
+              <div className="cr-steps" aria-label="Registration progress">
+                {STEPS.map((s, i) => (
+                  <div className="cr-step" key={s.id}>
+                    <div className={`cr-step-circle${step > s.id ? " done" : step === s.id ? " active" : ""}`}>
+                      {step > s.id ? <CheckIcon size={11} /> : s.id}
+                    </div>
+                    <span className={`cr-step-label${step === s.id ? " active" : step > s.id ? " done" : ""}`}>
+                      {s.label}
+                    </span>
+                    {i < STEPS.length - 1 && (
+                      <div className="cr-step-line">
+                        <div className="cr-step-line-fill" style={{ width: step > s.id ? "100%" : "0%" }} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <form onSubmit={handleSubmit} noValidate>
+
+                {/* ── Step 1: Identity ── */}
+                {step === 1 && (
+                  <div className="cr-step-body" key="step1">
+                    <div className="cr-step-header">
+                      <div className="cr-step-num">01</div>
+                      <div>
+                        <div className="cr-step-name">Personal Identity</div>
+                        <p className="cr-step-desc">
+                          Provide your personal and contact information as it appears on your government-issued identification.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="cr-form-grid">
+                      {field("fullName",    "Full Name",     { type: "text",  required: true, placeholder: "As on Aadhaar card" })}
+                      {field("fatherName",  "Father's Name", { type: "text",  required: true, placeholder: "As on Aadhaar card" })}
+                      {field("phoneNumber", "Mobile Number", { type: "tel",   maxLength: "10", required: true, placeholder: "10-digit number" })}
+                      {field("email",       "Email Address", { type: "email", required: true, placeholder: "you@example.com" })}
+                    </div>
+                  </div>
                 )}
-              </div>
-            ))}
-          </div>
 
-          <form onSubmit={handleSubmit} noValidate>
+                {/* ── Step 2: Documents ── */}
+                {step === 2 && (
+                  <div className="cr-step-body" key="step2">
+                    <div className="cr-step-header">
+                      <div className="cr-step-num">02</div>
+                      <div>
+                        <div className="cr-step-name">Document Numbers</div>
+                        <p className="cr-step-desc">
+                          Enter your government-issued document numbers. These will be verified by your Village Administrative Officer.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="cr-form-grid cr-form-grid--single">
+                      {field("aadhaarNumber",    "Aadhaar Number",     { type: "text", maxLength: "12", inputMode: "numeric", required: true, placeholder: "12-digit number" })}
+                      {field("rationCardNumber", "Ration Card Number", { type: "text", required: true, placeholder: "e.g. AP-XXXXX-XXXXX" })}
+                    </div>
+                  </div>
+                )}
 
-            {/* ── Step 1: Identity ── */}
-            {step === 1 && (
-              <div className="form-step">
-                <p className="step-description">
-                  Provide your personal and contact information as it appears
-                  on your official government-issued identification.
-                </p>
-                <div className="registration-form-grid">
-                  {field("fullName",    "Full Name",     { type: "text",  required: true, placeholder: "As on Aadhaar card" })}
-                  {field("fatherName",  "Father's Name", { type: "text",  required: true, placeholder: "As on Aadhaar card" })}
-                  {field("phoneNumber", "Mobile Number", { type: "tel",   maxLength: "10", required: true, placeholder: "10-digit mobile number" })}
-                  {field("email",       "Email Address", { type: "email", required: true, placeholder: "official@example.com" })}
-                </div>
-              </div>
-            )}
+                {/* ── Step 3: Village + Review ── */}
+                {step === 3 && (() => {
+                  const vcErr  = errors.villageId && touched.villageId;
+                  const vcOk   = touched.villageId && !errors.villageId;
+                  return (
+                    <div className="cr-step-body" key="step3">
+                      <div className="cr-step-header">
+                        <div className="cr-step-num">03</div>
+                        <div>
+                          <div className="cr-step-name">Review & Submit</div>
+                          <p className="cr-step-desc">
+                            Select your village and review your complete declaration before final submission.
+                          </p>
+                        </div>
+                      </div>
 
-            {/* ── Step 2: Documents ── */}
-            {step === 2 && (
-              <div className="form-step">
-                <p className="step-description">
-                  Enter your government-issued document numbers. These will be
-                  verified by the Village Administrative Officer before approval.
-                </p>
-                <div className="registration-form-grid">
-                  {field("aadhaarNumber",    "Aadhaar Number",    { type: "text", maxLength: "12", inputMode: "numeric", required: true, placeholder: "12-digit Aadhaar number" })}
-                  {field("rationCardNumber", "Ration Card Number",{ type: "text", required: true, placeholder: "e.g. AP-XXXXX-XXXXX" })}
-                </div>
-              </div>
-            )}
+                      <div className={`cr-field full${vcErr ? " has-err" : vcOk ? " is-valid" : ""}`}>
+                        <label htmlFor="villageId">Village of Residence</label>
+                        <div className="cr-field-wrap cr-select-wrap">
+                          <select
+                            id="villageId" name="villageId"
+                            value={form.villageId}
+                            onChange={handleChange} onBlur={handleBlur} required
+                          >
+                            <option value="">— Select your village —</option>
+                            {villages.map(v => (
+                              <option key={v.id} value={v.id}>{v.name}</option>
+                            ))}
+                          </select>
+                          <span className="cr-select-arrow" aria-hidden="true">
+                            <ChevronDown />
+                          </span>
+                        </div>
+                        {vcErr && (
+                          <span className="cr-field-err" role="alert">
+                            <ErrIcon />
+                            {errors.villageId}
+                          </span>
+                        )}
+                      </div>
 
-            {/* ── Step 3: Village + Confirm ── */}
-            {step === 3 && (
-              <div className="form-step">
-                <p className="step-description">
-                  Select your village and review your complete declaration before
-                  final submission to the district registry.
-                </p>
-                <div className="registration-form-grid">
-                  <div className={`form-group full-width${errors.villageId && touched.villageId ? " field-error" : ""}`}>
-                    <label htmlFor="villageId">Village of Residence</label>
-                    <select
-                      id="villageId" name="villageId"
-                      value={form.villageId}
-                      onChange={handleChange} onBlur={handleBlur} required
-                    >
-                      <option value="">— Select Your Village —</option>
-                      {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                    </select>
-                    {touched.villageId && errors.villageId && (
-                      <span className="field-error-msg" role="alert">{errors.villageId}</span>
+                      <div className="cr-review">
+                        <div className="cr-review-head">
+                          <DocIcon />
+                          Application Summary
+                        </div>
+                        <div className="cr-review-grid">
+                          {[
+                            { dt: "Full Name",    dd: form.fullName },
+                            { dt: "Father's Name", dd: form.fatherName },
+                            { dt: "Mobile",       dd: form.phoneNumber },
+                            { dt: "Email",        dd: form.email },
+                            { dt: "Aadhaar",      dd: form.aadhaarNumber ? `•••• •••• ${form.aadhaarNumber.slice(-4)}` : "" },
+                            { dt: "Ration Card",  dd: form.rationCardNumber },
+                            { dt: "Village",      dd: villages.find(v => v.id === form.villageId)?.name, full: true },
+                          ].map((row, i) => (
+                            <div className={`cr-review-row${row.full ? " full" : ""}`} key={i}>
+                              <span className="cr-review-dt">{row.dt}</span>
+                              <span className="cr-review-dd">{row.dd || "—"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ── Navigation ── */}
+                <div className="cr-nav">
+                  {step > 1 && (
+                    <button type="button" className="cr-btn-back" onClick={handleBack}>
+                      <ArrowLeft />
+                      Back
+                    </button>
+                  )}
+                  <div className="cr-nav-right">
+                    <span className="cr-step-counter">{step} of {STEPS.length}</span>
+                    {step < 3 && (
+                      <button type="button" className="cr-btn-next" onClick={handleNext}>
+                        Continue
+                        <ArrowRight />
+                      </button>
+                    )}
+                    {step === 3 && (
+                      <button type="submit" className="cr-btn-submit" disabled={loading}>
+                        {loading ? (
+                          <><span className="cr-spinner" aria-hidden="true" /> Submitting…</>
+                        ) : (
+                          <>Submit Application <ArrowRight /></>
+                        )}
+                      </button>
                     )}
                   </div>
                 </div>
 
-                <div className="review-summary">
-                  <h3>Review Your Application</h3>
-                  <dl className="review-grid">
-                    <div><dt>Full Name</dt>   <dd>{form.fullName        || "—"}</dd></div>
-                    <div><dt>Father's Name</dt><dd>{form.fatherName      || "—"}</dd></div>
-                    <div><dt>Mobile</dt>       <dd>{form.phoneNumber     || "—"}</dd></div>
-                    <div><dt>Email</dt>        <dd>{form.email           || "—"}</dd></div>
-                    <div><dt>Aadhaar</dt>      <dd>{form.aadhaarNumber   ? `•••• •••• ${form.aadhaarNumber.slice(-4)}` : "—"}</dd></div>
-                    <div><dt>Ration Card</dt>  <dd>{form.rationCardNumber|| "—"}</dd></div>
-                    <div><dt>Village</dt>      <dd>{villages.find(v => v.id === form.villageId)?.name || "—"}</dd></div>
-                  </dl>
-                </div>
-              </div>
-            )}
+              </form>
 
-            {/* ── Navigation ── */}
-            <div className="step-nav">
-              {step > 1 && (
-                <button type="button" className="btn-back" onClick={handleBack}>
-                  ← Back
-                </button>
-              )}
-              {step < 3 && (
-                <button type="button" className="btn-next" onClick={handleNext}>
-                  Continue →
-                </button>
-              )}
-              {step === 3 && (
-                <button type="submit" className="submit-btn" disabled={loading}>
-                  {loading ? "Submitting…" : "⚜ Submit Application"}
-                </button>
-              )}
             </div>
-          </form>
-        </div>
-      </section>
+          </div>
 
-      {/* ══ FOOTER ══ */}
-      <footer className="citizen-footer">
-        <div className="footer-left">
-          <strong>RuralOps Platform</strong>
-          <span>District Rural Governance Infrastructure</span>
         </div>
-        <div className="footer-center">© 2026 RuralOps — GOWTHAM CHIRIKI</div>
-        <div className="footer-links">
-          <a href="#">Privacy</a>
-          <a href="#">Security</a>
-          <a href="#">Support</a>
-        </div>
-      </footer>
+
+        {/* ── FOOTER ── */}
+        <footer className="cr-footer">
+          <div className="cr-footer-brand">
+            <strong>RuralOps Platform</strong>
+            <span>Digital Rural Governance Infrastructure</span>
+          </div>
+          <div className="cr-footer-copy">© 2026 RuralOps — GOWTHAM CHIRIKI</div>
+          <nav className="cr-footer-nav">
+            <a href="#">Privacy</a>
+            <a href="#">Security</a>
+            <a href="#">Support</a>
+          </nav>
+        </footer>
+
+      </div>
+
+      {/* ══ TOASTS ══ */}
+      <div className="cr-toasts" role="region" aria-label="Notifications" aria-live="polite">
+        {toast.toasts.map(t => (
+          <div
+            key={t.id}
+            className={`cr-toast cr-toast--${t.type} ${t.out ? "tout" : "tin"}`}
+            onClick={() => toast.dismiss(t.id)}
+          >
+            <div className="cr-toast-shell">
+              <div className="cr-toast-ic">
+                {t.type === "success" ? (
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : t.type === "error" ? (
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                    <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                ) : (
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                    <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M6 5.5v3M6 3.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </div>
+              <div className="cr-toast-body">
+                <span className="cr-toast-ttl">{t.ttl}</span>
+                <span className="cr-toast-msg">{t.sub}</span>
+              </div>
+              <button
+                className="cr-toast-close"
+                onClick={e => { e.stopPropagation(); toast.dismiss(t.id); }}
+                aria-label="Dismiss"
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M7 1L1 7M1 1l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+            {!t.out && <div className="cr-toast-bar" />}
+          </div>
+        ))}
+      </div>
     </>
   );
 }
