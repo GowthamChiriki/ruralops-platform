@@ -9,6 +9,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -16,13 +17,16 @@ public class SecurityConfig {
 
     private final JWTAuthenticationFilter jwtAuthenticationFilter;
     private final LoginRateLimitFilter loginRateLimitFilter;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     public SecurityConfig(
             JWTAuthenticationFilter jwtAuthenticationFilter,
-            LoginRateLimitFilter loginRateLimitFilter
+            LoginRateLimitFilter loginRateLimitFilter,
+            CorsConfigurationSource corsConfigurationSource
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.loginRateLimitFilter = loginRateLimitFilter;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
@@ -31,48 +35,38 @@ public class SecurityConfig {
         http
 
                 /* =====================================================
-                   CORS SUPPORT
+                   CORS (FIXED PROPERLY)
                    ===================================================== */
-
-                .cors(cors -> {})
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
                 /* =====================================================
-                   DISABLE DEFAULT SECURITY FEATURES
+                   DISABLE DEFAULT SECURITY
                    ===================================================== */
-
                 .csrf(csrf -> csrf.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(form -> form.disable())
 
                 /* =====================================================
-                   STATELESS SESSION (JWT)
+                   STATELESS (JWT)
                    ===================================================== */
-
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
                 /* =====================================================
-                   AUTHORIZATION RULES
+                   AUTHORIZATION
                    ===================================================== */
-
                 .authorizeHttpRequests(auth -> auth
 
                         /* CORS preflight */
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        /* =====================================================
-                           AUTH ENDPOINTS
-                           ===================================================== */
-
+                        /* AUTH */
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers("/auth/refresh").permitAll()
                         .requestMatchers("/auth/validate").permitAll()
 
-                        /* =====================================================
-                           PUBLIC REGISTRATION
-                           ===================================================== */
-
+                        /* PUBLIC */
                         .requestMatchers("/citizen/register").permitAll()
                         .requestMatchers("/citizen/login").permitAll()
                         .requestMatchers("/citizen/activate/**").permitAll()
@@ -81,46 +75,31 @@ public class SecurityConfig {
                         .requestMatchers("/workers/activate/**").permitAll()
                         .requestMatchers("/status/**").permitAll()
 
-                        /* uploads */
-                        .requestMatchers("/uploads/**").permitAll()
-
-                        /* ================= SUPER ADMIN (FULL ACCESS) ================= */
+                        /* ADMIN */
                         .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
 
-
-                        /* =====================================================
-                           VAO ACTIONS
-                           ===================================================== */
-
+                        /* VAO */
                         .requestMatchers("/workers/provision").hasAnyRole("VAO", "SUPER_ADMIN")
                         .requestMatchers("/workers/village").hasAnyRole("VAO", "SUPER_ADMIN")
                         .requestMatchers("/vao/**").hasAnyRole("VAO", "SUPER_ADMIN")
 
-                        /* =====================================================
-                           WORKER ACTIONS
-                           ===================================================== */
-
+                        /* WORKER */
                         .requestMatchers("/workers/complaints/**").hasAnyRole("WORKER", "SUPER_ADMIN")
 
-                        /* =====================================================
-                           CITIZEN ACTIONS
-                           ===================================================== */
-
+                        /* CITIZEN */
                         .requestMatchers("/citizen/**").hasAnyRole("CITIZEN", "SUPER_ADMIN")
 
-                        /* =====================================================
-                           MAO ADMIN
-                           ===================================================== */
-
+                        /* MAO */
                         .requestMatchers("/administration/**").hasAnyRole("MAO", "SUPER_ADMIN")
 
                         .anyRequest().authenticated()
                 )
 
                 /* =====================================================
-                   FILTER CHAIN
+                   FILTERS
                    ===================================================== */
 
+                // ⚠️ TEMP: comment this if login fails
                 .addFilterBefore(
                         loginRateLimitFilter,
                         UsernamePasswordAuthenticationFilter.class
