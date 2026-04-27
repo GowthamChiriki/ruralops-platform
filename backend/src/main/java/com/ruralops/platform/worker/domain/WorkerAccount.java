@@ -11,15 +11,6 @@ import java.time.Instant;
 import java.util.Locale;
 import java.util.UUID;
 
-/**
- * Represents a field worker responsible for a specific village area.
- *
- * Routing rule:
- * Area → exactly ONE worker
- *
- * Authentication rule:
- * WorkerAccount belongs to exactly ONE User identity.
- */
 @Entity
 @Table(
         name = "worker_accounts",
@@ -46,19 +37,11 @@ public class WorkerAccount {
     @Column(nullable = false, updatable = false)
     private UUID id;
 
-    /**
-     * Public worker identifier.
-     *
-     * Example:
-     * RLOW-VLG-9021-A3F9
-     */
     @Column(name = "worker_id", nullable = false, length = 40, updatable = false)
     private String workerId;
 
     /**
      * Core authentication identity.
-     *
-     * JWT userId → users.id → worker_accounts.user_id
      */
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
@@ -94,13 +77,6 @@ public class WorkerAccount {
     private String phoneNumber;
 
     /* ======================================================
-       Authentication
-       ====================================================== */
-
-    @Column(name = "password_hash")
-    private String passwordHash;
-
-    /* ======================================================
        Account Lifecycle
        ====================================================== */
 
@@ -116,12 +92,9 @@ public class WorkerAccount {
     private Instant createdAt;
 
     protected WorkerAccount() {
-        // Required by JPA
+        // JPA only
     }
 
-    /**
-     * Constructor used when VAO provisions a worker.
-     */
     public WorkerAccount(
             User user,
             String workerId,
@@ -189,10 +162,6 @@ public class WorkerAccount {
         return phoneNumber;
     }
 
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
     public AccountStatus getStatus() {
         return status;
     }
@@ -205,10 +174,7 @@ public class WorkerAccount {
        Domain Behavior
        ====================================================== */
 
-    /**
-     * Activates worker account.
-     */
-    public void activate(String passwordHash) {
+    public void activate() {
 
         if (this.status != AccountStatus.PENDING_ACTIVATION) {
             throw new IllegalStateException(
@@ -216,17 +182,9 @@ public class WorkerAccount {
             );
         }
 
-        if (passwordHash == null || passwordHash.isBlank()) {
-            throw new IllegalArgumentException("Password hash required");
-        }
-
-        this.passwordHash = passwordHash;
         this.status = AccountStatus.ACTIVE;
     }
 
-    /**
-     * Suspend worker account.
-     */
     public void suspend() {
 
         if (this.status != AccountStatus.ACTIVE) {
@@ -238,9 +196,6 @@ public class WorkerAccount {
         this.status = AccountStatus.SUSPENDED;
     }
 
-    /**
-     * Returns whether worker account is active.
-     */
     public boolean isActive() {
         return this.status == AccountStatus.ACTIVE;
     }

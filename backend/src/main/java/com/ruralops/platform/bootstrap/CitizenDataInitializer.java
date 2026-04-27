@@ -6,6 +6,7 @@ import com.ruralops.platform.citizen.account.domain.CitizenAccount;
 import com.ruralops.platform.citizen.account.repository.CitizenAccountRepository;
 import com.ruralops.platform.citizen.profile.domain.CitizenProfile;
 import com.ruralops.platform.citizen.profile.repository.CitizenProfileRepository;
+import com.ruralops.platform.common.enums.AccountStatus;
 import com.ruralops.platform.governance.domain.Village;
 import com.ruralops.platform.governance.repository.VillageRepository;
 
@@ -57,7 +58,7 @@ public class CitizenDataInitializer implements ApplicationRunner {
                                 new User(
                                         phone,
                                         "TEMP",
-                                        com.ruralops.platform.common.enums.AccountStatus.PENDING_ACTIVATION
+                                        AccountStatus.PENDING_ACTIVATION
                                 )
                         )
                 );
@@ -88,16 +89,23 @@ public class CitizenDataInitializer implements ApplicationRunner {
         // --------------------------------
         // 2. APPROVE (simulate VAO)
         // --------------------------------
-        String citizenId = "RLOC-PNP-0001-Z1X2"; // static for seed
+        String citizenId = "RLOC-PNP-0001-Z1X2";
         String vaoId = "RLOV-PNP-0001-X9Y8";
 
         citizen.approve(citizenId, vaoId);
 
         // --------------------------------
-        // 3. ACTIVATE
+        // 3. ACTIVATE (FIXED)
         // --------------------------------
-        String passwordHash = passwordEncoder.encode("Rural@123");
-        citizen.activate(passwordHash);
+        String encodedPassword = passwordEncoder.encode("Rural@123");
+
+        // set password in USER
+        user.setPasswordHash(encodedPassword);
+        user.setStatus(AccountStatus.ACTIVE);
+        userRepository.save(user);
+
+        // activate citizen (no password now)
+        citizen.activate();
 
         citizenRepository.save(citizen);
 

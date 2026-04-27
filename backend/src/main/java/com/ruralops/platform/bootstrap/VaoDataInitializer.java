@@ -6,6 +6,7 @@ import com.ruralops.platform.administration.vah.domain.VaoAccount;
 import com.ruralops.platform.administration.vah.repository.VaoAccountRepository;
 import com.ruralops.platform.auth.entity.User;
 import com.ruralops.platform.auth.repository.UserRepository;
+import com.ruralops.platform.common.enums.AccountStatus;
 import com.ruralops.platform.governance.domain.Village;
 import com.ruralops.platform.governance.repository.VillageRepository;
 
@@ -50,12 +51,12 @@ public class VaoDataInitializer implements ApplicationRunner {
 
         String phone = "9999999999";
 
-        // Fetch user (already created in UserDataInitializer)
+        // Fetch user
         User user = userRepository.findByPhone(phone)
                 .orElseThrow(() ->
                         new RuntimeException("User not found: " + phone));
 
-        // Idempotency check
+        // Idempotency
         if (vaoRepository.existsByUser_Id(user.getId())) return;
 
         // Fetch village
@@ -73,9 +74,16 @@ public class VaoDataInitializer implements ApplicationRunner {
                 phone
         );
 
-        // Activate immediately (bypass token flow for seed)
-        String passwordHash = passwordEncoder.encode("Rural@123");
-        vao.activate(passwordHash);
+        // ✅ FIXED ACTIVATION FLOW
+        String encodedPassword = passwordEncoder.encode("Rural@123");
+
+        // set password in USER
+        user.setPasswordHash(encodedPassword);
+        user.setStatus(AccountStatus.ACTIVE);
+        userRepository.save(user);
+
+        // activate VAO account
+        vao.activate();
 
         vaoRepository.save(vao);
 

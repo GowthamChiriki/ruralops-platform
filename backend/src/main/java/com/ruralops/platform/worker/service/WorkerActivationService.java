@@ -40,18 +40,12 @@ public class WorkerActivationService {
     @Transactional
     public void activate(WorkerActivationRequest request) {
 
-        /* -------------------------
-           Password confirmation
-        ------------------------- */
-
+        // 1. Password confirmation
         if (!request.passwordsMatch()) {
             throw new InvalidRequestException("Passwords do not match");
         }
 
-        /* -------------------------
-           Retrieve worker account
-        ------------------------- */
-
+        // 2. Retrieve worker account
         WorkerAccount worker = workerAccountRepository
                 .findByWorkerId(request.getWorkerId())
                 .orElseThrow(() ->
@@ -67,38 +61,24 @@ public class WorkerActivationService {
             );
         }
 
-        /* -------------------------
-           Validate activation key
-        ------------------------- */
-
+        // 3. Validate activation key
         activationValidationService.validateAndConsume(
                 "WORKER",
                 request.getWorkerId(),
                 request.getActivationKey()
         );
 
-        /* -------------------------
-           Hash password
-        ------------------------- */
-
-        String passwordHash = passwordEncoder.encode(request.getPassword());
-
-        /* -------------------------
-           Update authentication user
-        ------------------------- */
-
+        // 4. Set password in USER
         User user = worker.getUser();
 
-        user.setPasswordHash(passwordHash);
-        user.activate();
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        user.setPasswordHash(encodedPassword);
+        user.setStatus(AccountStatus.ACTIVE);
 
         userRepository.save(user);
 
-        /* -------------------------
-           Activate worker role
-        ------------------------- */
-
-        worker.activate(passwordHash);
+        // 5. Activate worker account (NO password here)
+        worker.activate();
 
         workerAccountRepository.save(worker);
     }
