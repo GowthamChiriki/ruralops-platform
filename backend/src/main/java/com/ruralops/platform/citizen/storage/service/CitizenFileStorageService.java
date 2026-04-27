@@ -1,29 +1,34 @@
 package com.ruralops.platform.citizen.storage.service;
 
 import com.ruralops.platform.common.exception.InvalidRequestException;
-import com.ruralops.platform.common.exception.FileStorageException;
+import com.ruralops.platform.common.storage.CloudinaryService;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.*;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Handles storage of citizen uploaded files.
+ * Handles storage of citizen uploaded files using Cloudinary.
  *
- * Current implementation uses local filesystem storage.
- * Architecture allows migration to cloud storage (S3 / Azure Blob)
- * without changing controller or API contract.
+ * Files are uploaded to:
+ *   citizens/{citizenId}/profile
+ *   citizens/{citizenId}/complaints
+ *
+ * Returns public Cloudinary URL.
  */
 @Slf4j
 @Service
 public class CitizenFileStorageService {
+
+    private final CloudinaryService cloudinaryService;
+
+    public CitizenFileStorageService(CloudinaryService cloudinaryService) {
+        this.cloudinaryService = cloudinaryService;
+    }
 
     /* =========================================================
        ALLOWED FILE TYPES
@@ -36,16 +41,6 @@ public class CitizenFileStorageService {
             Set.of("image/jpeg", "image/jpg", "image/png", "application/pdf");
 
     /* =========================================================
-       CONFIGURATION
-       ========================================================= */
-
-    @Value("${storage.root:uploads/citizens}")
-    private String storageRoot;
-
-    @Value("${storage.base-url:http://localhost:8080}")
-    private String baseUrl;
-
-    /* =========================================================
        PROFILE PHOTO STORAGE
        ========================================================= */
 
@@ -53,70 +48,40 @@ public class CitizenFileStorageService {
 
         validateFile(file, ALLOWED_IMAGE_TYPES, 5 * 1024 * 1024);
 
-        return storeFile(userId, "profile", file);
+        return uploadToCloudinary(userId, "profile", file);
     }
 
     /* =========================================================
-       COMPLAINT ATTACHMENT STORAGE
+       COMPLAINT FILE STORAGE
        ========================================================= */
 
     public String storeComplaintFile(UUID userId, MultipartFile file) {
 
         validateFile(file, ALLOWED_COMPLAINT_TYPES, 10 * 1024 * 1024);
 
-        return storeFile(userId, "complaints", file);
+        return uploadToCloudinary(userId, "complaints", file);
     }
 
     /* =========================================================
-       CORE STORAGE LOGIC
+       CLOUDINARY STORAGE
        ========================================================= */
 
-    private String storeFile(UUID userId, String folder, MultipartFile file) {
+    private String uploadToCloudinary(UUID userId, String folder, MultipartFile file) {
 
         String citizenId = sanitizePath(userId.toString());
 
-        try {
+        String cloudFolder = "citizens/" + citizenId + "/" + folder;
 
-            String extension = getFileExtension(file.getOriginalFilename());
+        String url = cloudinaryService.upload(file, cloudFolder);
 
-            String filename = UUID.randomUUID() + extension;
+        log.info(
+                "Citizen file uploaded to Cloudinary | citizenId={} | folder={} | url={}",
+                citizenId,
+                folder,
+                url
+        );
 
-            Path citizenFolder = Paths.get(storageRoot, citizenId, folder);
-
-            Files.createDirectories(citizenFolder);
-
-            Path destination = citizenFolder.resolve(filename);
-
-            Files.copy(
-                    file.getInputStream(),
-                    destination,
-                    StandardCopyOption.REPLACE_EXISTING
-            );
-
-            String publicUrl = buildPublicUrl(citizenId, folder, filename);
-
-            log.info(
-                    "File stored successfully | citizenId={} | folder={} | file={}",
-                    citizenId,
-                    folder,
-                    filename
-            );
-
-            return publicUrl;
-
-        } catch (IOException e) {
-
-            log.error(
-                    "File storage failed for citizen {} : {}",
-                    citizenId,
-                    e.getMessage()
-            );
-
-            throw new FileStorageException(
-                    "Failed to store file for citizen " + citizenId,
-                    e
-            );
-        }
+        return url;
     }
 
     /* =========================================================
@@ -148,29 +113,6 @@ public class CitizenFileStorageService {
        HELPERS
        ========================================================= */
 
-    private String buildPublicUrl(String citizenId, String folder, String filename) {
-
-        return baseUrl +
-                "/uploads/citizens/" +
-                citizenId +
-                "/" +
-                folder +
-                "/" +
-                filename;
-    }
-
-    private String getFileExtension(String filename) {
-
-        if (filename == null || !filename.contains(".")) {
-            return "";
-        }
-
-        return filename.substring(filename.lastIndexOf(".")).toLowerCase();
-    }
-
-    /**
-     * Prevents path traversal attacks.
-     */
     private String sanitizePath(String input) {
 
         if (input == null || input.isBlank()) {

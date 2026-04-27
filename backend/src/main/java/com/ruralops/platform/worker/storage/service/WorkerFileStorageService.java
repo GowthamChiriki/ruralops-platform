@@ -1,40 +1,42 @@
 package com.ruralops.platform.worker.storage.service;
 
 import com.ruralops.platform.common.exception.InvalidRequestException;
-import com.ruralops.platform.common.exception.FileStorageException;
 import com.ruralops.platform.common.exception.ResourceNotFoundException;
+import com.ruralops.platform.common.storage.CloudinaryService;
 
 import com.ruralops.platform.worker.domain.WorkerAccount;
 import com.ruralops.platform.worker.repository.WorkerAccountRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.*;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Handles storage of worker uploaded files.
+ * Handles storage of worker uploaded files using Cloudinary.
  *
- * Current implementation uses local filesystem storage.
- * Architecture allows migration to cloud storage (S3 / Azure Blob)
- * without changing controller or API contract.
+ * Files are uploaded to:
+ *   workers/{workerId}/profile
+ *   workers/{workerId}/attachments
+ *
+ * Returns public Cloudinary URL.
  */
 @Slf4j
 @Service
 public class WorkerFileStorageService {
 
     private final WorkerAccountRepository workerAccountRepository;
+    private final CloudinaryService cloudinaryService;
 
     public WorkerFileStorageService(
-            WorkerAccountRepository workerAccountRepository
+            WorkerAccountRepository workerAccountRepository,
+            CloudinaryService cloudinaryService
     ) {
         this.workerAccountRepository = workerAccountRepository;
+        this.cloudinaryService = cloudinaryService;
     }
 
     /* =========================================================
@@ -48,16 +50,6 @@ public class WorkerFileStorageService {
             Set.of("image/jpeg", "image/jpg", "image/png", "application/pdf");
 
     /* =========================================================
-       CONFIGURATION
-       ========================================================= */
-
-    @Value("${storage.root:uploads/workers}")
-    private String storageRoot;
-
-    @Value("${storage.base-url:http://localhost:8080}")
-    private String baseUrl;
-
-    /* =========================================================
        PROFILE PHOTO STORAGE
        ========================================================= */
 
@@ -65,7 +57,7 @@ public class WorkerFileStorageService {
 
         validateFile(file, ALLOWED_IMAGE_TYPES, 5 * 1024 * 1024);
 
-        return storeFile(userId, "profile", file);
+        return uploadToCloudinary(userId, "profile", file);
     }
 
     /* =========================================================
@@ -76,14 +68,14 @@ public class WorkerFileStorageService {
 
         validateFile(file, ALLOWED_ATTACHMENT_TYPES, 10 * 1024 * 1024);
 
-        return storeFile(userId, "attachments", file);
+        return uploadToCloudinary(userId, "attachments", file);
     }
 
     /* =========================================================
-       CORE STORAGE LOGIC
+       CLOUDINARY STORAGE
        ========================================================= */
 
-    private String storeFile(UUID userId, String folder, MultipartFile file) {
+    private String uploadToCloudinary(UUID userId, String folder, MultipartFile file) {
 
         WorkerAccount worker = workerAccountRepository
                 .findByUser_Id(userId)
@@ -95,48 +87,19 @@ public class WorkerFileStorageService {
 
         String workerId = sanitizePath(worker.getWorkerId());
 
-        try {
+        String cloudFolder = "workers/" + workerId + "/" + folder;
 
-            String extension = getFileExtension(file.getOriginalFilename());
-            String filename = UUID.randomUUID() + extension;
+        String url = cloudinaryService.upload(file, cloudFolder);
 
-            Path workerFolder = Paths.get(storageRoot, workerId, folder);
+        log.info(
+                "Worker file uploaded to Cloudinary | userId={} | workerId={} | folder={} | url={}",
+                userId,
+                workerId,
+                folder,
+                url
+        );
 
-            Files.createDirectories(workerFolder);
-
-            Path destination = workerFolder.resolve(filename);
-
-            Files.copy(
-                    file.getInputStream(),
-                    destination,
-                    StandardCopyOption.REPLACE_EXISTING
-            );
-
-            String publicUrl = buildPublicUrl(workerId, folder, filename);
-
-            log.info(
-                    "File stored successfully | userId={} | workerId={} | folder={} | file={}",
-                    userId,
-                    workerId,
-                    folder,
-                    filename
-            );
-
-            return publicUrl;
-
-        } catch (IOException e) {
-
-            log.error(
-                    "File storage failed for worker {} : {}",
-                    workerId,
-                    e.getMessage()
-            );
-
-            throw new FileStorageException(
-                    "Failed to store file for worker " + workerId,
-                    e
-            );
-        }
+        return url;
     }
 
     /* =========================================================
@@ -168,29 +131,6 @@ public class WorkerFileStorageService {
        HELPERS
        ========================================================= */
 
-    private String buildPublicUrl(String workerId, String folder, String filename) {
-
-        return baseUrl +
-                "/uploads/workers/" +
-                workerId +
-                "/" +
-                folder +
-                "/" +
-                filename;
-    }
-
-    private String getFileExtension(String filename) {
-
-        if (filename == null || !filename.contains(".")) {
-            return "";
-        }
-
-        return filename.substring(filename.lastIndexOf(".")).toLowerCase();
-    }
-
-    /**
-     * Prevents path traversal attacks.
-     */
     private String sanitizePath(String input) {
 
         if (input == null || input.isBlank()) {
