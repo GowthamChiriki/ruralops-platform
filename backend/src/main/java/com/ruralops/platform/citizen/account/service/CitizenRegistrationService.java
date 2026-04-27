@@ -69,7 +69,7 @@ public class CitizenRegistrationService {
            3. Prevent duplicate citizen account for same user
            ====================================================== */
 
-        if (citizenAccountRepository.existsByUserId(user.getId())) {
+        if (citizenAccountRepository.existsByUser_Id(user.getId())) {
             throw new InvalidRequestException(
                     "This user already has a citizen account"
             );

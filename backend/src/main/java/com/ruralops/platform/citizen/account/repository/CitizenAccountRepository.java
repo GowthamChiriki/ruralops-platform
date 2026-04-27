@@ -40,7 +40,7 @@ public interface CitizenAccountRepository
 
     boolean existsByAadhaarNumber(String aadhaarNumber);
 
-    boolean existsByUserId(UUID userId);
+    boolean existsByUser_Id(UUID userId);
 
     /* =====================================================
        VAO APPROVAL WORKFLOW
