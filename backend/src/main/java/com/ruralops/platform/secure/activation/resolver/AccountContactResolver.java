@@ -1,33 +1,22 @@
 package com.ruralops.platform.secure.activation.resolver;
 
 /**
- * Resolves official contact details for an account.
+ * Resolves and validates account eligibility for activation.
  *
- * This interface defines how the system retrieves
- * registered contact information.
+ * PURPOSE:
+ * - Ensure account exists
+ * - Ensure account is in correct state for activation
  *
- * Security note:
- * - Client-provided contact data must never be trusted.
- * - All contact details must be resolved from internal records.
+ * NOTE:
+ * - No email or contact responsibility anymore
  */
 public interface AccountContactResolver {
 
     /**
-     * Retrieves the registered contact details for the given account.
+     * Validates that the account is eligible for activation.
      *
      * @param accountType Account category (MAO, VAO, CITIZEN, etc.)
      * @param accountId   Public account identifier
-     * @return Contact details resolved from system data
      */
-    ResolvedContact resolve(String accountType, String accountId);
-
-    /**
-     * Immutable snapshot of resolved contact information.
-     *
-     * Represents trusted data retrieved from the system.
-     */
-    record ResolvedContact(
-            String email,
-            String displayName
-    ) {}
+    void validate(String accountType, String accountId);
 }
