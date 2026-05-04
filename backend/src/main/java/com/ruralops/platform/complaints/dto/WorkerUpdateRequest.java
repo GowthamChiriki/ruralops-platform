@@ -14,12 +14,12 @@ import jakarta.validation.constraints.Size;
  * Workflow:
  *
  * 1. Worker uploads AFTER image using the storage API:
- *       POST /complaints/files/after/{workerId}
+ *       POST /worker/files/attachment
  *
- * 2. Storage API returns the stored image URL.
+ * 2. Storage API returns the Cloudinary-stored image URL.
  *
  * 3. Worker calls:
- *       POST /workers/{workerId}/complaints/{complaintId}/complete
+ *       PATCH /workers/complaints/{complaintId}/complete
  *    with this body.
  *
  * 4. The controller binds the complaintId from the URL path via
@@ -53,20 +53,18 @@ public class WorkerUpdateRequest {
     /**
      * URL of the uploaded AFTER image.
      *
-     * Must reference a file stored through the system storage service.
-     * The URL must begin with the configured storage base URL to prevent
-     * workers from pointing to arbitrary external URLs.
+     * Must reference a file stored through the Cloudinary storage service.
+     * The URL must begin with the Cloudinary base URL to prevent workers
+     * from pointing to arbitrary external URLs.
      *
-     * FIX: The previous regex (.*\/uploads\/.*) could be satisfied by
-     * any URL containing "/uploads/" anywhere, including external hosts.
-     * The pattern now anchors to the expected path prefix. The base URL
-     * prefix is enforced at the service layer; the regex here guards
-     * against obviously malformed values.
+     * FIX: Previous regex anchored to /uploads/(complaints|workers)/ path
+     * segment which does not exist in Cloudinary URLs. Updated to match
+     * the actual Cloudinary URL format returned by CloudinaryService.
      */
     @NotBlank(message = "After image is required")
     @Size(max = 1000, message = "Image URL too long")
     @Pattern(
-            regexp = "https?://.+/uploads/(complaints|workers)/.+",
+            regexp = "https://res\\.cloudinary\\.com/.+",
             message = "After image must be a valid system-stored upload URL"
     )
     private final String afterImageUrl;
@@ -90,13 +88,13 @@ public class WorkerUpdateRequest {
      */
     @JsonCreator
     public WorkerUpdateRequest(
-            @JsonProperty("complaintId")  String complaintId,
+            @JsonProperty("complaintId")   String complaintId,
             @JsonProperty("afterImageUrl") String afterImageUrl,
-            @JsonProperty("workerNotes")  String workerNotes
+            @JsonProperty("workerNotes")   String workerNotes
     ) {
-        this.complaintId  = normalize(complaintId);
+        this.complaintId   = normalize(complaintId);
         this.afterImageUrl = normalize(afterImageUrl);
-        this.workerNotes  = normalize(workerNotes);
+        this.workerNotes   = normalize(workerNotes);
     }
 
     /**

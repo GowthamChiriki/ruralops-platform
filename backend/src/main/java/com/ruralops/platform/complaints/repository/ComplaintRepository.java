@@ -143,13 +143,9 @@ public interface ComplaintRepository
        AI Verification Queue
        ===================================================== */
 
-    List<Complaint> findByStatusAndAiVerifiedFalse(
-            ComplaintStatus status
-    );
+    List<Complaint> findByStatusAndAiCleanScoreIsNull(ComplaintStatus status);
 
-    long countByStatusAndAiVerifiedFalse(
-            ComplaintStatus status
-    );
+    long countByStatusAndAiCleanScoreIsNull(ComplaintStatus status);
 
     List<Complaint> findByAreaAndAssignedWorkerIsNull(Area area);
 

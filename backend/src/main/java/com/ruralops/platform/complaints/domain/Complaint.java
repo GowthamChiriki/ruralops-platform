@@ -7,7 +7,6 @@ import com.ruralops.platform.governance.domain.Village;
 
 import jakarta.persistence.*;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -15,18 +14,17 @@ import java.util.UUID;
 @Table(
         name = "complaints",
         indexes = {
-                @Index(name = "idx_complaint_area",    columnList = "area_id"),
-                @Index(name = "idx_complaint_worker",  columnList = "assigned_worker_id"),
-                @Index(name = "idx_complaint_status",  columnList = "status"),
+                @Index(name = "idx_complaint_area", columnList = "area_id"),
+                @Index(name = "idx_complaint_worker", columnList = "assigned_worker_id"),
+                @Index(name = "idx_complaint_status", columnList = "status"),
                 @Index(name = "idx_complaint_created", columnList = "created_at")
         }
 )
 public class Complaint {
 
-    /* ======================================================
-       Primary Identifier
-       ====================================================== */
-
+    /* =========================
+       PRIMARY KEY
+       ========================= */
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -34,10 +32,9 @@ public class Complaint {
     @Column(name = "complaint_id", nullable = false, unique = true, length = 50)
     private String complaintId;
 
-    /* ======================================================
-       Governance Anchors
-       ====================================================== */
-
+    /* =========================
+       RELATIONS
+       ========================= */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "citizen_id", nullable = false)
     private CitizenAccount citizen;
@@ -50,18 +47,13 @@ public class Complaint {
     @JoinColumn(name = "area_id", nullable = false)
     private Area area;
 
-    /* ======================================================
-       Operational Assignment
-       ====================================================== */
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_worker_id")
     private WorkerAccount assignedWorker;
 
-    /* ======================================================
-       Complaint Data
-       ====================================================== */
-
+    /* =========================
+       CORE DATA
+       ========================= */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private ComplaintCategory category;
@@ -75,38 +67,34 @@ public class Complaint {
     @Column(name = "after_image_url", length = 500)
     private String afterImageUrl;
 
-    /* ======================================================
-       Lifecycle Status
-       ====================================================== */
-
+    /* =========================
+       STATUS
+       ========================= */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ComplaintStatus status;
 
-    /* ======================================================
-       AI Fields
-       ====================================================== */
-
+    /* =========================
+       AI FIELDS
+       ========================= */
     @Column(name = "ai_clean_score")
     private Integer aiCleanScore;
 
     @Column(name = "ai_processed_at")
     private Instant aiProcessedAt;
 
-    /* ======================================================
-       Governance Fields
-       ====================================================== */
-
+    /* =========================
+       GOVERNANCE
+       ========================= */
     @Column(name = "worker_rating")
     private Integer workerRating;
 
     @Column(name = "vao_review_note", length = 1000)
     private String vaoReviewNote;
 
-    /* ======================================================
-       Timeline
-       ====================================================== */
-
+    /* =========================
+       TIMELINE
+       ========================= */
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -125,6 +113,9 @@ public class Complaint {
     @Column(name = "closed_at")
     private Instant closedAt;
 
+    /* =========================
+       CONSTRUCTOR
+       ========================= */
     protected Complaint() {}
 
     public Complaint(
@@ -143,14 +134,13 @@ public class Complaint {
         this.category = category;
         this.description = normalize(description);
         this.beforeImageUrl = normalize(beforeImageUrl);
-
         this.status = ComplaintStatus.SUBMITTED;
         this.createdAt = Instant.now();
     }
 
-    /* ======================================================
-       Domain Behavior
-       ====================================================== */
+    /* =========================
+       BUSINESS LOGIC
+       ========================= */
 
     public void markAwaitingAssignment() {
         ensureNotClosed();
@@ -162,8 +152,18 @@ public class Complaint {
         this.status = ComplaintStatus.AWAITING_ASSIGNMENT;
     }
 
+    public void recordVaoReviewNote(String note) {
+        ensureNotClosed();
+
+        this.vaoReviewNote = normalize(note);
+    }
+
     public void assignWorker(WorkerAccount worker) {
         ensureNotClosed();
+
+        if (worker == null) {
+            throw new IllegalArgumentException("Worker cannot be null");
+        }
 
         if (status != ComplaintStatus.SUBMITTED &&
                 status != ComplaintStatus.AWAITING_ASSIGNMENT) {
@@ -202,16 +202,11 @@ public class Complaint {
         this.resolvedAt = Instant.now();
     }
 
-    /**
-     * ONLY stores AI result (does NOT change status)
-     */
     public void recordAiVerification(int cleanScore) {
         ensureNotClosed();
 
         if (status != ComplaintStatus.RESOLVED) {
-            throw new IllegalStateException(
-                    "AI verification only allowed after resolution"
-            );
+            throw new IllegalStateException("AI verification only after RESOLVED");
         }
 
         if (cleanScore < 0 || cleanScore > 100) {
@@ -244,14 +239,9 @@ public class Complaint {
         this.closedAt = Instant.now();
     }
 
-    public void recordVaoReviewNote(String note) {
-        ensureNotClosed();
-        this.vaoReviewNote = normalize(note);
-    }
-
-    /* ======================================================
-       Helpers
-       ====================================================== */
+    /* =========================
+       HELPERS
+       ========================= */
 
     private void ensureNotClosed() {
         if (status == ComplaintStatus.CLOSED) {
@@ -263,14 +253,45 @@ public class Complaint {
         return value == null ? null : value.trim();
     }
 
-    /* ======================================================
-       Getters
-       ====================================================== */
+    /* =========================
+       GETTERS
+       ========================= */
 
     public String getComplaintId() { return complaintId; }
+
+    public CitizenAccount getCitizen() { return citizen; }
+
+    public Village getVillage() { return village; }
+
+    public Area getArea() { return area; }
+
     public WorkerAccount getAssignedWorker() { return assignedWorker; }
-    public ComplaintStatus getStatus() { return status; }
-    public Integer getAiCleanScore() { return aiCleanScore; }
+
+    public ComplaintCategory getCategory() { return category; }
+
+    public String getDescription() { return description; }
+
     public String getBeforeImageUrl() { return beforeImageUrl; }
+
     public String getAfterImageUrl() { return afterImageUrl; }
+
+    public ComplaintStatus getStatus() { return status; }
+
+    public Integer getAiCleanScore() { return aiCleanScore; }
+
+    public Integer getWorkerRating() { return workerRating; }
+
+    public String getVaoReviewNote() { return vaoReviewNote; }
+
+    public Instant getCreatedAt() { return createdAt; }
+
+    public Instant getAssignedAt() { return assignedAt; }
+
+    public Instant getStartedAt() { return startedAt; }
+
+    public Instant getResolvedAt() { return resolvedAt; }
+
+    public Instant getVerifiedAt() { return verifiedAt; }
+
+    public Instant getClosedAt() { return closedAt; }
 }

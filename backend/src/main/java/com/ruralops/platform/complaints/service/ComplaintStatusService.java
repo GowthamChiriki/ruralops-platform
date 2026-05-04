@@ -6,25 +6,22 @@ import com.ruralops.platform.complaints.dto.WorkerUpdateRequest;
 import com.ruralops.platform.complaints.repository.ComplaintRepository;
 
 import com.ruralops.platform.worker.domain.WorkerAccount;
-
 import com.ruralops.platform.ai.verification.AiVerificationService;
 
 import com.ruralops.platform.common.exception.ResourceNotFoundException;
 import com.ruralops.platform.common.exception.GovernanceViolationException;
 import com.ruralops.platform.common.exception.InvalidRequestException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Handles complaint lifecycle transitions triggered by workers.
- *
- * Lifecycle:
- *
- * ASSIGNED → IN_PROGRESS → RESOLVED → VERIFIED → CLOSED
- */
 @Service
 public class ComplaintStatusService {
+
+    private static final Logger log = LoggerFactory.getLogger(ComplaintStatusService.class);
 
     private final ComplaintRepository complaintRepository;
     private final AiVerificationService aiVerificationService;
@@ -38,86 +35,110 @@ public class ComplaintStatusService {
     }
 
     /* =====================================================
-       Worker Lifecycle Actions
+       START WORK
        ===================================================== */
-
     @Transactional
     public void startWork(String complaintId, WorkerAccount worker) {
+
         Complaint complaint = getComplaintOrThrow(complaintId);
 
         validateWorkerOwnership(complaint, worker);
 
         if (complaint.getStatus() != ComplaintStatus.ASSIGNED) {
             throw new InvalidRequestException(
-                    "Complaint cannot be started in state: "
-                            + complaint.getStatus()
+                    "Cannot start work. Current status: " + complaint.getStatus()
             );
         }
 
         complaint.startWork();
+
+        log.info("Work started | complaintId={} | workerId={}",
+                complaintId, worker.getWorkerId());
     }
 
-    /**
-     * COMPLETE FLOW:
-     *
-     * IN_PROGRESS
-     * → RESOLVED (worker)
-     * → AI SCORE
-     * → VERIFIED
-     * → CLOSED
-     */
+    /* =====================================================
+       COMPLETE WORK FLOW
+       ===================================================== */
     @Transactional
     public void completeWork(
             WorkerAccount worker,
             WorkerUpdateRequest request
     ) {
 
+        /* =========================
+           VALIDATE REQUEST
+           ========================= */
+        if (request == null) {
+            throw new InvalidRequestException("Request body is missing");
+        }
+
+        if (request.getComplaintId() == null || request.getComplaintId().isBlank()) {
+            throw new InvalidRequestException("Complaint ID is required");
+        }
+
+        if (request.getAfterImageUrl() == null || request.getAfterImageUrl().isBlank()) {
+            throw new InvalidRequestException("After image is required");
+        }
+
+        /* =========================
+           FETCH + AUTH
+           ========================= */
         Complaint complaint = getComplaintOrThrow(request.getComplaintId());
 
         validateWorkerOwnership(complaint, worker);
 
         if (complaint.getStatus() != ComplaintStatus.IN_PROGRESS) {
             throw new InvalidRequestException(
-                    "Complaint cannot be completed in state: "
-                            + complaint.getStatus()
+                    "Cannot complete complaint in state: " + complaint.getStatus()
             );
         }
 
-        /* ============================
-           1. Worker completes work
-           ============================ */
+        /* =========================
+           1. COMPLETE WORK
+           ========================= */
         complaint.completeWork(request.getAfterImageUrl());
 
-        /* ============================
-           2. AI Verification
-           ============================ */
-        int score;
+        log.info("Complaint marked RESOLVED | complaintId={}", complaint.getComplaintId());
+
+        /* =========================
+           2. AI VERIFICATION
+           ========================= */
+        int score = 0;
 
         try {
-            score = aiVerificationService.evaluateCleanliness(
-                    complaint.getBeforeImageUrl(),
-                    complaint.getAfterImageUrl()
-            );
+            if (complaint.getBeforeImageUrl() != null &&
+                    complaint.getAfterImageUrl() != null) {
+
+                score = aiVerificationService.evaluateCleanliness(
+                        complaint.getBeforeImageUrl(),
+                        complaint.getAfterImageUrl()
+                );
+            }
         } catch (Exception ex) {
-            // Safety: AI failure should NOT break flow
-            score = 0;
+            log.error("AI verification failed | complaintId={}", complaint.getComplaintId(), ex);
+            score = 0; // fallback
         }
 
         complaint.recordAiVerification(score);
 
-        /* ============================
-           3. System marks verified
-           ============================ */
+        log.info("AI score recorded | complaintId={} | score={}",
+                complaint.getComplaintId(), score);
+
+        /* =========================
+           3. MARK VERIFIED
+           ========================= */
         complaint.markVerified();
 
-        /* ============================
-           4. Close complaint
-           ============================ */
+        /* =========================
+           4. CLOSE COMPLAINT
+           ========================= */
         complaint.close();
+
+        log.info("Complaint CLOSED | complaintId={}", complaint.getComplaintId());
     }
 
     /* =====================================================
-       Internal Helpers
+       HELPERS
        ===================================================== */
 
     private Complaint getComplaintOrThrow(String complaintId) {

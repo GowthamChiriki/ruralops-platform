@@ -6,72 +6,33 @@ import com.ruralops.platform.complaints.domain.ComplaintStatus;
 
 import java.time.Instant;
 
-/**
- * Read-only representation of a Complaint.
- *
- * Used across:
- * - citizen interfaces
- * - worker dashboards
- * - VAO monitoring panels
- *
- * This DTO exposes operational state without exposing
- * internal database identifiers.
- */
 public class ComplaintResponse {
 
     private final String complaintId;
-
     private final String citizenId;
-
     private final String villageId;
     private final String villageName;
-
     private final Long areaId;
     private final String areaName;
-
     private final String workerId;
     private final String workerName;
-
     private final ComplaintCategory category;
-
     private final String description;
-
     private final String beforeImageUrl;
-
     private final String afterImageUrl;
-
     private final ComplaintStatus status;
 
-    /* ======================
-       AI Metrics
-       ====================== */
-
     private final Integer aiCleanScore;
-
     private final Boolean aiVerified;
 
-    /* ======================
-       Governance Review
-       ====================== */
-
     private final Integer workerRating;
-
     private final String vaoReviewNote;
 
-    /* ======================
-       Timeline Metrics
-       ====================== */
-
     private final Instant createdAt;
-
     private final Instant assignedAt;
-
     private final Instant startedAt;
-
     private final Instant resolvedAt;
-
     private final Instant verifiedAt;
-
     private final Instant closedAt;
 
     public ComplaintResponse(
@@ -124,10 +85,6 @@ public class ComplaintResponse {
         this.closedAt = closedAt;
     }
 
-    /* ======================================================
-       ENTITY → DTO MAPPER
-       ====================================================== */
-
     public static ComplaintResponse from(Complaint complaint) {
 
         String workerId = null;
@@ -139,7 +96,6 @@ public class ComplaintResponse {
         }
 
         return new ComplaintResponse(
-
                 complaint.getComplaintId(),
 
                 complaint.getCitizen() != null
@@ -177,7 +133,7 @@ public class ComplaintResponse {
 
                 complaint.getAiCleanScore(),
 
-                complaint.getAiVerified(),
+                complaint.getAiCleanScore() != null,
 
                 complaint.getWorkerRating(),
 
@@ -197,53 +153,27 @@ public class ComplaintResponse {
         );
     }
 
-    /* ======================
-       Getters
-       ====================== */
-
     public String getComplaintId() { return complaintId; }
-
     public String getCitizenId() { return citizenId; }
-
     public String getVillageId() { return villageId; }
-
     public String getVillageName() { return villageName; }
-
     public Long getAreaId() { return areaId; }
-
     public String getAreaName() { return areaName; }
-
     public String getWorkerId() { return workerId; }
-
     public String getWorkerName() { return workerName; }
-
     public ComplaintCategory getCategory() { return category; }
-
     public String getDescription() { return description; }
-
     public String getBeforeImageUrl() { return beforeImageUrl; }
-
     public String getAfterImageUrl() { return afterImageUrl; }
-
     public ComplaintStatus getStatus() { return status; }
-
     public Integer getAiCleanScore() { return aiCleanScore; }
-
     public Boolean getAiVerified() { return aiVerified; }
-
     public Integer getWorkerRating() { return workerRating; }
-
     public String getVaoReviewNote() { return vaoReviewNote; }
-
     public Instant getCreatedAt() { return createdAt; }
-
     public Instant getAssignedAt() { return assignedAt; }
-
     public Instant getStartedAt() { return startedAt; }
-
     public Instant getResolvedAt() { return resolvedAt; }
-
     public Instant getVerifiedAt() { return verifiedAt; }
-
     public Instant getClosedAt() { return closedAt; }
 }
