@@ -1,5 +1,7 @@
 package com.ruralops.platform.ai.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -8,6 +10,9 @@ import java.util.Map;
 
 @Service
 public class AiClient {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(AiClient.class);
 
     private final RestClient restClient;
 
@@ -26,6 +31,8 @@ public class AiClient {
                     "afterImageUrl", afterUrl
             );
 
+            log.debug("AI request payload: {}", requestBody);
+
             Map response = restClient.post()
                     .uri(AI_URL)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -33,27 +40,52 @@ public class AiClient {
                     .retrieve()
                     .body(Map.class);
 
-            if (response == null || !response.containsKey("score")) {
-                return fallback("Invalid response");
+            log.info("AI response: {}", response);
+
+            if (response == null) {
+                return fallback("Null response");
             }
 
             Object scoreObj = response.get("score");
 
-            if (scoreObj instanceof Number number) {
-                return clamp(number.intValue());
+            // fallback to alternate key if needed
+            if (scoreObj == null) {
+                scoreObj = response.get("cleanliness_score");
             }
 
-            return fallback("Invalid score format");
+            if (scoreObj == null) {
+                return fallback("Score not found in response: " + response);
+            }
+
+            // handle numeric response
+            if (scoreObj instanceof Number number) {
+                return normalize(number.doubleValue());
+            }
+
+            // handle string response
+            try {
+                double value = Double.parseDouble(scoreObj.toString());
+                return normalize(value);
+            } catch (Exception e) {
+                return fallback("Invalid score format: " + scoreObj);
+            }
 
         } catch (Exception e) {
+            log.error("AI request failed", e);
             return fallback(e.getMessage());
         }
     }
 
-    /* ========================================== */
+    private int normalize(double value) {
+        // convert 0–1 → 0–100
+        if (value <= 1.0) {
+            return clamp((int) (value * 100));
+        }
+        return clamp((int) value);
+    }
 
     private int fallback(String reason) {
-        System.out.println("AI fallback: " + reason);
+        log.warn("AI fallback triggered: {}", reason);
         return 0;
     }
 
