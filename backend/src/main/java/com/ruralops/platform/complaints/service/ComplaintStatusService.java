@@ -22,16 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
  * Lifecycle:
  *
  * ASSIGNED → IN_PROGRESS → RESOLVED → VERIFIED → CLOSED
- *
- * Responsibilities:
- * - validate worker ownership
- * - enforce lifecycle transitions
- * - persist completion evidence
- * - trigger AI verification
- *
- * NOTE: Read-only citizen queries have been removed from this class.
- *       They live exclusively in ComplaintQueryService to avoid
- *       duplicating query logic across services.
  */
 @Service
 public class ComplaintStatusService {
@@ -51,9 +41,6 @@ public class ComplaintStatusService {
        Worker Lifecycle Actions
        ===================================================== */
 
-    /**
-     * Worker begins resolving a complaint.
-     */
     @Transactional
     public void startWork(String complaintId, WorkerAccount worker) {
         Complaint complaint = getComplaintOrThrow(complaintId);
@@ -71,20 +58,20 @@ public class ComplaintStatusService {
     }
 
     /**
-     * Worker marks complaint resolution complete.
+     * COMPLETE FLOW:
      *
-     * The complaintId on the request must match the path-bound ID
-     * set by the controller via {@link WorkerUpdateRequest#withComplaintId}.
-     * This prevents a worker from redirecting their completion to a
-     * complaint they do not own.
-     *
-     * This triggers AI verification after marking the complaint RESOLVED.
+     * IN_PROGRESS
+     * → RESOLVED (worker)
+     * → AI SCORE
+     * → VERIFIED
+     * → CLOSED
      */
     @Transactional
     public void completeWork(
             WorkerAccount worker,
             WorkerUpdateRequest request
     ) {
+
         Complaint complaint = getComplaintOrThrow(request.getComplaintId());
 
         validateWorkerOwnership(complaint, worker);
@@ -96,14 +83,37 @@ public class ComplaintStatusService {
             );
         }
 
+        /* ============================
+           1. Worker completes work
+           ============================ */
         complaint.completeWork(request.getAfterImageUrl());
 
-        int cleanlinessScore = aiVerificationService.evaluateCleanliness(
-                complaint.getBeforeImageUrl(),
-                complaint.getAfterImageUrl()
-        );
+        /* ============================
+           2. AI Verification
+           ============================ */
+        int score;
 
-        complaint.recordAiVerification(cleanlinessScore);
+        try {
+            score = aiVerificationService.evaluateCleanliness(
+                    complaint.getBeforeImageUrl(),
+                    complaint.getAfterImageUrl()
+            );
+        } catch (Exception ex) {
+            // Safety: AI failure should NOT break flow
+            score = 0;
+        }
+
+        complaint.recordAiVerification(score);
+
+        /* ============================
+           3. System marks verified
+           ============================ */
+        complaint.markVerified();
+
+        /* ============================
+           4. Close complaint
+           ============================ */
+        complaint.close();
     }
 
     /* =====================================================

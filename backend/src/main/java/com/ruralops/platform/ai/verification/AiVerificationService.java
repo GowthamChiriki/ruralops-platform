@@ -1,37 +1,59 @@
 package com.ruralops.platform.ai.verification;
 
+import com.ruralops.platform.ai.client.AiClient;
 import org.springframework.stereotype.Service;
 
-import java.util.Random;
-
 /**
- * Simulates AI-based cleanliness verification.
+ * Handles AI-based cleanliness verification.
  *
- * In the future this service will call
- * a computer vision model to compare images.
+ * Calls external ML service to evaluate
+ * before/after images and return a score.
  */
 @Service
 public class AiVerificationService {
 
-    private final Random random = new Random();
+    private final AiClient aiClient;
+
+    public AiVerificationService(AiClient aiClient) {
+        this.aiClient = aiClient;
+    }
 
     /**
-     * Compares before and after images.
+     * Evaluates cleanliness using AI model.
      *
-     * Returns cleanliness score (0–100).
+     * Returns score between 0–100.
      */
     public int evaluateCleanliness(
             String beforeImageUrl,
             String afterImageUrl
     ) {
 
-        /*
-         For now we simulate AI output.
+        // Basic validation (optional but safe)
+        if (beforeImageUrl == null || afterImageUrl == null) {
+            return fallback("Missing image URLs");
+        }
 
-         Future implementation will call
-         a Python ML model or AI microservice.
-         */
+        if (beforeImageUrl.isBlank() || afterImageUrl.isBlank()) {
+            return fallback("Empty image URLs");
+        }
 
-        return 40 + random.nextInt(60);
+        try {
+            return aiClient.getCleanlinessScore(
+                    beforeImageUrl,
+                    afterImageUrl
+            );
+
+        } catch (Exception ex) {
+            return fallback(ex.getMessage());
+        }
+    }
+
+    /* ====================================================== */
+
+    private int fallback(String reason) {
+        System.out.println("AI Verification fallback: " + reason);
+
+        // Safe fallback score
+        return 0;
     }
 }
