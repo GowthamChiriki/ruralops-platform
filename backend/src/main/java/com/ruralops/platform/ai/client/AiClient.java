@@ -7,7 +7,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -19,22 +19,18 @@ public class AiClient {
     private static final Logger log =
             LoggerFactory.getLogger(AiClient.class);
 
-    private final RestClient restClient;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     private static final String AI_URL =
             "https://ruralops.onrender.com/predict";
 
-    public AiClient(RestClient.Builder builder) {
-        this.restClient = builder.build();
-    }
-
     public int getCleanlinessScore(String beforeUrl, String afterUrl) {
 
         try {
-            log.info("Downloading image...");
+            log.info("Downloading image from URL...");
 
-            // Read image bytes
             byte[] imageBytes;
+
             try (InputStream is = new URL(afterUrl).openStream()) {
                 imageBytes = is.readAllBytes();
             }
@@ -42,12 +38,12 @@ public class AiClient {
             ByteArrayResource resource = new ByteArrayResource(imageBytes) {
                 @Override
                 public String getFilename() {
-                    return "image.jpg"; // REQUIRED for multipart
+                    return "image.jpg"; // required for multipart
                 }
             };
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", resource); // MUST be "file"
+            body.add("file", resource); // AI expects "file"
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -55,28 +51,27 @@ public class AiClient {
             HttpEntity<MultiValueMap<String, Object>> request =
                     new HttpEntity<>(body, headers);
 
-            log.info("Calling AI service...");
+            log.info("Sending request to AI service...");
 
-            Map response = restClient.post()
-                    .uri(AI_URL)
-                    .body(request)
-                    .retrieve()
-                    .body(Map.class);
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(AI_URL, request, Map.class);
 
-            log.info("AI response: {}", response);
+            Map<?, ?> responseBody = response.getBody();
 
-            if (response == null) {
+            log.info("AI response: {}", responseBody);
+
+            if (responseBody == null) {
                 return fallback("Null response");
             }
 
-            Object scoreObj = response.get("score");
+            Object scoreObj = responseBody.get("score");
 
             if (scoreObj == null) {
-                scoreObj = response.get("prediction");
+                scoreObj = responseBody.get("prediction");
             }
 
             if (scoreObj == null) {
-                return fallback("Score missing: " + response);
+                return fallback("Score missing: " + responseBody);
             }
 
             double value = Double.parseDouble(scoreObj.toString());
@@ -88,7 +83,10 @@ public class AiClient {
         }
     }
 
+    /* ========================= */
+
     private int normalize(double value) {
+        // If AI returns 0–1 → convert to 0–100
         if (value <= 1.0) {
             return clamp((int) (value * 100));
         }
