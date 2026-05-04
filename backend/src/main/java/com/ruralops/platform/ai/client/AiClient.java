@@ -27,10 +27,7 @@ public class AiClient {
     public int getCleanlinessScore(String beforeUrl, String afterUrl) {
 
         try {
-            log.info("Downloading image from URL...");
-
             byte[] imageBytes;
-
             try (InputStream is = new URL(afterUrl).openStream()) {
                 imageBytes = is.readAllBytes();
             }
@@ -38,20 +35,18 @@ public class AiClient {
             ByteArrayResource resource = new ByteArrayResource(imageBytes) {
                 @Override
                 public String getFilename() {
-                    return "image.jpg"; // required for multipart
+                    return "image.jpg";
                 }
             };
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", resource); // AI expects "file"
+            body.add("file", resource);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
             HttpEntity<MultiValueMap<String, Object>> request =
                     new HttpEntity<>(body, headers);
-
-            log.info("Sending request to AI service...");
 
             ResponseEntity<Map> response =
                     restTemplate.postForEntity(AI_URL, request, Map.class);
@@ -64,18 +59,28 @@ public class AiClient {
                 return fallback("Null response");
             }
 
-            Object scoreObj = responseBody.get("score");
+            // ✅ Extract class + confidence
+            Object classObj = responseBody.get("class");
+            Object confidenceObj = responseBody.get("confidence");
 
-            if (scoreObj == null) {
-                scoreObj = responseBody.get("prediction");
+            if (confidenceObj == null) {
+                return fallback("Confidence missing: " + responseBody);
             }
 
-            if (scoreObj == null) {
-                return fallback("Score missing: " + responseBody);
+            double confidence = Double.parseDouble(confidenceObj.toString());
+
+            int score = normalize(confidence);
+
+            //  Optional: adjust score based on class
+            if (classObj != null) {
+                String label = classObj.toString();
+
+                if ("dirty".equalsIgnoreCase(label)) {
+                    score = 100 - score; // invert score
+                }
             }
 
-            double value = Double.parseDouble(scoreObj.toString());
-            return normalize(value);
+            return score;
 
         } catch (Exception e) {
             log.error("AI request failed", e);
@@ -86,11 +91,7 @@ public class AiClient {
     /* ========================= */
 
     private int normalize(double value) {
-        // If AI returns 0–1 → convert to 0–100
-        if (value <= 1.0) {
-            return clamp((int) (value * 100));
-        }
-        return clamp((int) value);
+        return clamp((int) (value * 100));
     }
 
     private int fallback(String reason) {
