@@ -2,7 +2,7 @@ package com.ruralops.platform.ai.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -31,32 +31,35 @@ public class AiClient {
     public int getCleanlinessScore(String beforeUrl, String afterUrl) {
 
         try {
-            log.info("Downloading image for AI...");
+            log.info("Downloading image...");
 
-            InputStream afterStream = new URL(afterUrl).openStream();
+            // Read image bytes
+            byte[] imageBytes;
+            try (InputStream is = new URL(afterUrl).openStream()) {
+                imageBytes = is.readAllBytes();
+            }
 
-            InputStreamResource fileResource = new InputStreamResource(afterStream) {
+            ByteArrayResource resource = new ByteArrayResource(imageBytes) {
                 @Override
                 public String getFilename() {
-                    return "image.jpg";
+                    return "image.jpg"; // REQUIRED for multipart
                 }
             };
 
-            // Multipart body
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", fileResource);  // IMPORTANT: "file" key
+            body.add("file", resource); // MUST be "file"
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-            HttpEntity<MultiValueMap<String, Object>> requestEntity =
+            HttpEntity<MultiValueMap<String, Object>> request =
                     new HttpEntity<>(body, headers);
 
-            log.info("Sending request to AI...");
+            log.info("Calling AI service...");
 
             Map response = restClient.post()
                     .uri(AI_URL)
-                    .body(requestEntity)
+                    .body(request)
                     .retrieve()
                     .body(Map.class);
 
