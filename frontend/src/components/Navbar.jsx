@@ -44,33 +44,16 @@ export default function Navbar() {
   const [theme, setTheme] = useState(localStorage.getItem("ruralops-theme") || "light");
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [roleOpen, setRoleOpen] = useState(false);
-  const [switching, setSwitching] = useState(false);
-  const roleDropdownRef = useRef(null);
-
   // Auth State
   const token = localStorage.getItem("accessToken");
   const accountType = localStorage.getItem("accountType");
   const accountId = localStorage.getItem("accountId");
-  const rawRoles = localStorage.getItem("roles");
-  const roles = rawRoles ? JSON.parse(rawRoles) : [];
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
-    const handleClickOutside = (e) => {
-      if (roleDropdownRef.current && !roleDropdownRef.current.contains(e.target)) {
-        setRoleOpen(false);
-      }
-    };
-
     window.addEventListener("scroll", handleScroll);
-    window.addEventListener("mousedown", handleClickOutside);
     document.documentElement.setAttribute("data-theme", theme);
-    
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -93,7 +76,6 @@ export default function Navbar() {
     if (!r) return { label: "User", color: "var(--accent)", icon: User, path: "/" };
     let key = r.toUpperCase();
     if (key.startsWith("ROLE_")) key = key.substring(5); 
-    
     return ROLE_CONFIG[key] || { label: r, color: "var(--accent)", icon: Shield, path: "/" };
   };
 
@@ -104,60 +86,6 @@ export default function Navbar() {
     const cfg = getRoleConfig(accountType);
     const path = cfg.path;
     return cfg.label === "Village Officer" ? `${path}/${accountId}` : path;
-  };
-
-  const normalizeRole = (val) => val?.toUpperCase().startsWith("ROLE_") ? val.substring(5).toUpperCase() : val?.toUpperCase();
-
-  const switchRole = async (newRole) => {
-    if (normalizeRole(newRole) === normalizeRole(accountType)) {
-      setRoleOpen(false);
-      return;
-    }
-
-    setSwitching(true);
-    setRoleOpen(false);
-
-    const currentToken = localStorage.getItem("accessToken");
-    
-    try {
-      const res = await fetch(`${API}/auth/switch-role`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${currentToken}`
-        },
-        body: JSON.stringify({ role: newRole }), // Send original role string (with ROLE_ if present)
-      });
-
-      if (!res.ok) throw new Error("Switch failed");
-
-      const data = await res.json();
-      
-      localStorage.setItem("accessToken",  data.accessToken);
-      if (data.refreshToken) {
-        localStorage.setItem("refreshToken", data.refreshToken);
-      }
-      localStorage.setItem("accountType",  data.activeRole || newRole);
-      localStorage.setItem("accountId",    data.accountId);
-      localStorage.setItem("villageId",    data.villageId ?? "");
-      
-      const config = getRoleConfig(data.activeRole || newRole);
-      const path = config.path;
-      
-      if (config.label === "Village Officer") {
-        navigate(`${path}/${data.accountId}`);
-      } else {
-        navigate(path);
-      }
-      
-      window.location.reload();
-    } catch (err) {
-      console.error("Role switch error:", err);
-      localStorage.setItem("accountType", newRole);
-      window.location.reload();
-    } finally {
-      setSwitching(false);
-    }
   };
 
   const isHome = location.pathname === "/";
@@ -180,9 +108,9 @@ export default function Navbar() {
         }
 
         .nb-logo-area {
-          display: flex; align-items: center; gap: 14px;
+          display: flex; align-items: center; gap: 16px;
           text-decoration: none; cursor: pointer; flex-shrink: 0;
-          margin-right: 48px;
+          margin-right: 64px;
         }
 
         .nb-logo {
@@ -214,7 +142,7 @@ export default function Navbar() {
         }
 
         .nb-links {
-          flex: 1; display: flex; align-items: center; gap: 32px;
+          flex: 1; display: flex; align-items: center; gap: 40px;
         }
 
         .nb-link-item { position: relative; }
@@ -355,7 +283,6 @@ export default function Navbar() {
         <img src={logo} alt="RuralOps" className="nb-logo" />
         <div className="nb-logo-text">
           <span className="nb-brand">RuralOps</span>
-          <span className="nb-tagline">Empowering Rural</span>
         </div>
       </div>
 
@@ -396,50 +323,11 @@ export default function Navbar() {
           </>
         ) : (
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div className="nb-portal-switcher" ref={roleDropdownRef} style={{ position: "relative" }}>
-              <div 
-                className="nb-portal-pill" 
-                onClick={() => setRoleOpen(!roleOpen)}
-              >
-                <div className="nb-portal-icon" style={{ backgroundColor: currentRole.color }}>
-                  {switching ? <RefreshCw size={14} className="nb-spin" /> : <currentRole.icon size={14} />}
-                </div>
-                <span>{switching ? "Switching..." : currentRole.label}</span>
-                {roles.length > 1 && !switching && <ChevronDown size={14} opacity={0.5} />}
+            <div className="nb-portal-pill static">
+              <div className="nb-portal-icon" style={{ backgroundColor: currentRole.color }}>
+                <currentRole.icon size={14} />
               </div>
-
-              <AnimatePresence>
-                {roleOpen && roles.length > 1 && (
-                  <motion.div 
-                    className="nb-portal-dropdown"
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="nb-pd-header">Switch Portal</div>
-                    {roles.map((r) => {
-                      const cfg = getRoleConfig(r);
-                      const isCurrent = normalizeRole(r) === normalizeRole(accountType);
-                      return (
-                        <div 
-                          key={r} 
-                          className={`nb-pd-item ${isCurrent ? "active" : ""}`}
-                          onClick={() => switchRole(r)}
-                        >
-                          <div className="nb-pd-icon" style={{ backgroundColor: cfg.bg || "rgba(0,0,0,0.05)", color: cfg.color }}>
-                            <cfg.icon size={18} />
-                          </div>
-                          <div className="nb-pd-info">
-                            <span className="nb-pd-label">{cfg.label}</span>
-                            <span className="nb-pd-status">{isCurrent ? "Active" : "Switch to Portal"}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <span>{currentRole.label}</span>
             </div>
             <button className="nb-btn-logout" onClick={handleLogout}>
               <LogOut size={16} /> Logout
