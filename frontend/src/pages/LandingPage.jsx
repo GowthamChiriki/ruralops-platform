@@ -24,14 +24,30 @@ import charAdminImg from "../assets/admin-character.png";
 import qrImg from "../assets/qr-code.png";
 
 export default function LandingPage() {
-  const [introVisible, setIntroVisible] = useState(true);
-  const [introDone, setIntroDone] = useState(false);
+  const navigate = useNavigate();
+  const token = localStorage.getItem("accessToken");
+  const accountType = localStorage.getItem("accountType");
+  const accountId = localStorage.getItem("accountId");
+
+  const [introVisible, setIntroVisible] = useState(!token);
+  const [introDone, setIntroDone] = useState(!!token);
 
   useEffect(() => {
+    if (token) return; // Skip animation if logged in
     const t1 = setTimeout(() => setIntroDone(true), 2200);
     const t2 = setTimeout(() => setIntroVisible(false), 2800);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
+  }, [token]);
+
+  const getDashboardPath = () => {
+    switch (accountType) {
+      case "CITIZEN": return "/citizen/dashboard";
+      case "VAO":     return `/vao/dashboard/${accountId}`;
+      case "WORKER":  return "/worker/dashboard";
+      case "MAO":     return "/mao/dashboard";
+      default:        return "/";
+    }
+  };
 
   return (
     <>
@@ -588,14 +604,22 @@ export default function LandingPage() {
                 className="lp-hero-btns"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 3.2 }}
+                transition={{ duration: 0.6, delay: token ? 0.2 : 3.2 }}
               >
-                <Link to="/citizen/register" className="lp-btn-primary">
-                  <UserPlus size={15} /> Register Now
-                </Link>
-                <Link to="/login" className="lp-btn-ghost">
-                  <LogIn size={15} /> Login
-                </Link>
+                {!token ? (
+                  <>
+                    <Link to="/citizen/register" className="lp-btn-primary">
+                      <UserPlus size={15} /> Register Now
+                    </Link>
+                    <Link to="/login" className="lp-btn-ghost">
+                      <LogIn size={15} /> Login
+                    </Link>
+                  </>
+                ) : (
+                  <Link to={getDashboardPath()} className="lp-btn-primary">
+                    <Layout size={15} /> Go to Dashboard
+                  </Link>
+                )}
               </motion.div>
 
               <motion.div

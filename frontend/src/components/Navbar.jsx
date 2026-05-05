@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Globe, Menu, X, ChevronDown, ArrowRight, Sun, Moon } from "lucide-react";
+import { Globe, Menu, X, ChevronDown, ArrowRight, Sun, Moon, Shield, Users } from "lucide-react";
 import logo from "../assets/ruralops-logo.png";
 
 const NAV_LINKS = [
@@ -33,6 +33,11 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Auth State
+  const token = localStorage.getItem("accessToken");
+  const accountType = localStorage.getItem("accountType");
+  const accountId = localStorage.getItem("accountId");
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
@@ -44,6 +49,25 @@ export default function Navbar() {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
     localStorage.setItem("ruralops-theme", newTheme);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("accountType");
+    localStorage.removeItem("accountId");
+    localStorage.removeItem("villageId");
+    navigate("/login");
+  };
+
+  const getDashboardPath = () => {
+    if (!token) return "/";
+    switch (accountType) {
+      case "CITIZEN": return "/citizen/dashboard";
+      case "VAO":     return `/vao/dashboard/${accountId}`;
+      case "WORKER":  return "/worker/dashboard";
+      case "MAO":     return "/mao/dashboard";
+      default:        return "/";
+    }
   };
 
   const isHome = location.pathname === "/";
@@ -119,7 +143,7 @@ export default function Navbar() {
         .nb-on-hero .nb-brand,
         .nb-on-hero .nb-link,
         .nb-on-hero .nb-lang,
-        .nb-on-hero .nb-btn-login {
+        .nb-on-hero .nb-user-role {
           color: #ffffff !important;
         }
         
@@ -235,6 +259,20 @@ export default function Navbar() {
           transition: 0.2s;
         }
 
+        .nb-user-role {
+          font-size: 13px;
+          font-weight: 800;
+          color: var(--text-2);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          background: var(--accent-soft);
+          color: var(--accent) !important;
+          border-radius: 8px;
+          text-transform: capitalize;
+        }
+
         .nb-btn-login {
           font-size: 15px;
           font-weight: 800;
@@ -262,6 +300,19 @@ export default function Navbar() {
           box-shadow: 0 8px 25px rgba(34,197,94,0.45);
         }
 
+        .nb-btn-logout {
+          background: #ef4444;
+          color: white !important;
+          padding: 10px 20px;
+          border-radius: 10px;
+          font-weight: 800;
+          font-size: 14px;
+          border: none;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+        .nb-btn-logout:hover { background: #dc2626; transform: scale(1.02); }
+
         .nb-mobile-toggle {
           display: none;
           color: var(--text-1);
@@ -279,7 +330,7 @@ export default function Navbar() {
         }
       `}</style>
 
-      <div className="nb-logo-area" onClick={() => navigate("/")}>
+      <div className="nb-logo-area" onClick={() => navigate(getDashboardPath())}>
         <img src={logo} alt="RuralOps" className="nb-logo" />
         <div className="nb-logo-text">
           <span className="nb-brand">RuralOps</span>
@@ -291,7 +342,7 @@ export default function Navbar() {
         {NAV_LINKS.map((link) => (
           <div key={link.label} className="nb-link-item">
             <Link 
-              to={link.path || "#"} 
+              to={link.label === "Home" && token ? getDashboardPath() : (link.path || "#")} 
               className={`nb-link ${location.pathname === link.path ? "active" : ""}`}
             >
               {link.label}
@@ -321,8 +372,24 @@ export default function Navbar() {
           {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
         </button>
 
-        <Link to="/login" className="nb-btn-login">Login</Link>
-        <Link to="/citizen/register" className="nb-btn-cta">Get Started</Link>
+        {!token ? (
+          <>
+            <Link to="/login" className="nb-btn-login">Login</Link>
+            <Link to="/citizen/register" className="nb-btn-cta">Get Started</Link>
+          </>
+        ) : (
+          <>
+            <div className="nb-user-role">
+              <Shield size={14} />
+              <span>
+                {accountType === "VAO" ? "Officer Portal" : 
+                 accountType === "CITIZEN" ? "Citizen Portal" : 
+                 accountType === "WORKER" ? "Field Staff" : accountType}
+              </span>
+            </div>
+            <button className="nb-btn-logout" onClick={handleLogout}>Logout</button>
+          </>
+        )}
         
         <button className="nb-mobile-toggle" onClick={() => setMenuOpen(!menuOpen)}>
           {menuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -330,4 +397,4 @@ export default function Navbar() {
       </div>
     </nav>
   );
-}
+}
