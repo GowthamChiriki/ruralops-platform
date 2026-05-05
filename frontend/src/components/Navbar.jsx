@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import logo from "../assets/ruralops-logo.png";
 
-const API = "https://ruralops-platform-production.up.railway.app";
+const API = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app";
 
 const NAV_LINKS = [
   { label: "Home", path: "/" },
@@ -89,8 +89,28 @@ export default function Navbar() {
     navigate("/login");
   };
 
+  const getRoleConfig = (r) => {
+    if (!r) return { label: "User", color: "var(--accent)", icon: User, path: "/" };
+    let key = r.toUpperCase();
+    if (key.startsWith("ROLE_")) key = key.substring(5); 
+    
+    return ROLE_CONFIG[key] || { label: r, color: "var(--accent)", icon: Shield, path: "/" };
+  };
+
+  const currentRole = getRoleConfig(accountType);
+
+  const getDashboardPath = () => {
+    if (!token) return "/";
+    const cfg = getRoleConfig(accountType);
+    const path = cfg.path;
+    return cfg.label === "Village Officer" ? `${path}/${accountId}` : path;
+  };
+
   const switchRole = async (newRole) => {
-    if (newRole === accountType) {
+    // Normalize comparison to handle ROLE_ prefix variants
+    const normalize = (val) => val?.toUpperCase().startsWith("ROLE_") ? val.substring(5).toUpperCase() : val?.toUpperCase();
+    
+    if (normalize(newRole) === normalize(accountType)) {
       setRoleOpen(false);
       return;
     }
@@ -101,59 +121,45 @@ export default function Navbar() {
     const currentToken = localStorage.getItem("accessToken");
     
     try {
-      // 1. Call the specific role switching endpoint with the current token
       const res = await fetch(`${API}/auth/switch-role`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           "Authorization": `Bearer ${currentToken}`
         },
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({ role: newRole }), // Send original role string (with ROLE_ if present)
       });
 
       if (!res.ok) throw new Error("Switch failed");
 
       const data = await res.json();
       
-      // 2. Update session with the new role-specific token
       localStorage.setItem("accessToken",  data.accessToken);
-      // Preserve existing refresh token if the switch response doesn't provide a new one
       if (data.refreshToken) {
         localStorage.setItem("refreshToken", data.refreshToken);
       }
-      localStorage.setItem("accountType",  newRole);
+      localStorage.setItem("accountType",  data.activeRole || newRole);
       localStorage.setItem("accountId",    data.accountId);
       localStorage.setItem("villageId",    data.villageId ?? "");
       
-      // 3. Navigate to the appropriate dashboard
-      const path = ROLE_CONFIG[newRole]?.path || "/";
-      if (newRole === "VAO") {
+      const config = getRoleConfig(data.activeRole || newRole);
+      const path = config.path;
+      
+      if (config.label === "Village Officer") {
         navigate(`${path}/${data.accountId}`);
       } else {
         navigate(path);
       }
       
-      // 4. Force a clean reload to initialize the new portal context
       window.location.reload();
     } catch (err) {
       console.error("Role switch error:", err);
-      // Fallback: update accountType and reload, though backend may still 403 
-      // if the token doesn't have the necessary claims.
       localStorage.setItem("accountType", newRole);
       window.location.reload();
     } finally {
       setSwitching(false);
     }
   };
-
-  const getDashboardPath = () => {
-    if (!token) return "/";
-    const base = ROLE_CONFIG[accountType]?.path || "/";
-    return accountType === "VAO" ? `${base}/${accountId}` : base;
-  };
-
-  const isHome = location.pathname === "/";
-  const currentRole = ROLE_CONFIG[accountType] || { label: accountType, color: "var(--accent)", icon: Shield };
 
   return (
     <nav className={`nb-root ${scrolled ? "nb-scrolled" : ""} ${isHome && !scrolled ? "nb-on-hero" : ""}`}>

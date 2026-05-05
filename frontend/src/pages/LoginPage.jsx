@@ -572,12 +572,15 @@ export default function LoginPage() {
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token) {
-      const accountType = localStorage.getItem("accountType");
-      const accountId = localStorage.getItem("accountId");
-      if (accountType === "CITIZEN") navigate("/citizen/dashboard");
-      else if (accountType === "VAO") navigate(`/vao/dashboard/${accountId}`);
-      else if (accountType === "WORKER") navigate("/worker/dashboard");
-      else if (accountType === "MAO") navigate("/mao/dashboard");
+      let type = localStorage.getItem("accountType") || "";
+      const id = localStorage.getItem("accountId");
+      
+      const role = type.toUpperCase().startsWith("ROLE_") ? type.substring(5) : type;
+      
+      if (role === "CITIZEN") navigate("/citizen/dashboard");
+      else if (role === "VAO") navigate(`/vao/dashboard/${id}`);
+      else if (role === "WORKER") navigate("/worker/dashboard");
+      else if (role === "MAO") navigate("/mao/dashboard");
     }
   }, [navigate]);
   const [toasts, setToasts] = useState([]);
@@ -621,7 +624,10 @@ export default function LoginPage() {
 
       addToast("success", "Welcome back!", "Redirecting to your dashboard…");
       setTimeout(() => {
-        switch (data.activeRole) {
+        const active = data.activeRole?.toUpperCase();
+        const role = active.startsWith("ROLE_") ? active.substring(5) : active;
+        
+        switch (role) {
           case "CITIZEN": navigate("/citizen/dashboard"); break;
           case "MAO": navigate("/mao/dashboard"); break;
           case "VAO": navigate(`/vao/dashboard/${data.accountId}`); break;

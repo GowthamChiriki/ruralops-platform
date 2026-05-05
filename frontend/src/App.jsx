@@ -59,8 +59,12 @@ import WorkerNotificationsPage from "./pages/worker/WorkerNotifications";
      "accessToken" | "accountType" | "accountId" | "villageId"
 ================================================================ */
 function getToken()  { return localStorage.getItem("accessToken"); }
-function getType()   { return localStorage.getItem("accountType"); } // matches saveSession()
-function getId()     { return localStorage.getItem("accountId");   } // matches saveSession()
+function getType()   { 
+  const raw = localStorage.getItem("accountType");
+  if (!raw) return null;
+  return raw.toUpperCase().startsWith("ROLE_") ? raw.substring(5).toUpperCase() : raw.toUpperCase();
+}
+function getId()     { return localStorage.getItem("accountId");   } 
 
 /* ================================================================
    GUARDS
