@@ -106,11 +106,10 @@ export default function Navbar() {
     return cfg.label === "Village Officer" ? `${path}/${accountId}` : path;
   };
 
+  const normalizeRole = (val) => val?.toUpperCase().startsWith("ROLE_") ? val.substring(5).toUpperCase() : val?.toUpperCase();
+
   const switchRole = async (newRole) => {
-    // Normalize comparison to handle ROLE_ prefix variants
-    const normalize = (val) => val?.toUpperCase().startsWith("ROLE_") ? val.substring(5).toUpperCase() : val?.toUpperCase();
-    
-    if (normalize(newRole) === normalize(accountType)) {
+    if (normalizeRole(newRole) === normalizeRole(accountType)) {
       setRoleOpen(false);
       return;
     }
@@ -160,6 +159,8 @@ export default function Navbar() {
       setSwitching(false);
     }
   };
+
+  const isHome = location.pathname === "/";
 
   return (
     <nav className={`nb-root ${scrolled ? "nb-scrolled" : ""} ${isHome && !scrolled ? "nb-on-hero" : ""}`}>
@@ -418,20 +419,20 @@ export default function Navbar() {
                   >
                     <div className="nb-pd-header">Switch Portal</div>
                     {roles.map((r) => {
-                      const cfg = ROLE_CONFIG[r];
-                      if (!cfg) return null;
+                      const cfg = getRoleConfig(r);
+                      const isCurrent = normalizeRole(r) === normalizeRole(accountType);
                       return (
                         <div 
                           key={r} 
-                          className={`nb-pd-item ${accountType === r ? "active" : ""}`}
+                          className={`nb-pd-item ${isCurrent ? "active" : ""}`}
                           onClick={() => switchRole(r)}
                         >
-                          <div className="nb-pd-icon" style={{ backgroundColor: cfg.bg, color: cfg.color }}>
+                          <div className="nb-pd-icon" style={{ backgroundColor: cfg.bg || "rgba(0,0,0,0.05)", color: cfg.color }}>
                             <cfg.icon size={18} />
                           </div>
                           <div className="nb-pd-info">
                             <span className="nb-pd-label">{cfg.label}</span>
-                            <span className="nb-pd-status">{accountType === r ? "Active" : "Switch to Portal"}</span>
+                            <span className="nb-pd-status">{isCurrent ? "Active" : "Switch to Portal"}</span>
                           </div>
                         </div>
                       );
