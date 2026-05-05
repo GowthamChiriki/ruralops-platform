@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import ruralopsLogo from "../../assets/ruralops-logo.png";
-import "../../styles/CitizenDashboard.css";
+import "../../Styles/CitizenDashboard.css";
 
 const API = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app";
 

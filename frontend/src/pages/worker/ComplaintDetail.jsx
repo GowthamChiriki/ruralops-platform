@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate, useSearchParams } from "react-router-dom"
 import Navbar from "../../components/Navbar"
 import Footer from "../../components/Footer"
-import "../../styles/WorkerComplaintDetail.css"
+import "../../Styles/WorkerComplaintDetail.css"
 
 const API = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app"
 

@@ -4,7 +4,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import ruralopsLogo from "../../assets/ruralops-logo.png";
 import VaoProfileModal from "./VaoProfileModal"; /* ← CHANGE 1: new import */
-import "../../styles/VaoDashboard.css";
+import "../../Styles/VaoDashboard.css";
 
 /* ════════════════════════════════════════════
    BASE URL — single source of truth

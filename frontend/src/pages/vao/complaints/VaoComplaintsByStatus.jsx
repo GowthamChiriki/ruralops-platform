@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 
-import "../../../styles/VaoComplaintsByStatus.css";
+import "../../../Styles/VaoComplaintsByStatus.css";
 
 /* ════════════════════════════════════════════
    BASE URL — single source of truth

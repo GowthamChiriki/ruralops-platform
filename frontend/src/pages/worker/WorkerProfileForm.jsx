@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";  // ✅ removed useParams — worker identity from JWT
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import "../../styles/WorkerProfile.css";
+import "../../Styles/WorkerProfile.css";
 
 /* ─────────────────────────────────────────────
    API BASE — single source of truth

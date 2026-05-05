@@ -2,8 +2,8 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
-import "../../../styles/VaoDashboard.css";
-import "../../../styles/VaoAnalyticsDashboard.css";
+import "../../../Styles/VaoDashboard.css";
+import "../../../Styles/VaoAnalyticsDashboard.css";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app";
 

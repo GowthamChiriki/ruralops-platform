@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import "../../styles/CitizenApprovals.css";
+import "../../Styles/CitizenApprovals.css";
 
 /* ════════════════════════════════════════════
    BASE URL — single source of truth

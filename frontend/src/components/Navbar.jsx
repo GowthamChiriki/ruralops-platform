@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import logo from "../assets/ruralops-logo.png";
-import "../styles/Navbar.css";
+import "../Styles/Navbar.css";
 
 const API = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app";
 

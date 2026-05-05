@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";  // ✅ removed useParams — worker identity from JWT
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import "../../styles/WorkerAnalytics.css";
+import "../../Styles/WorkerAnalytics.css";
 
 const API = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app";
 

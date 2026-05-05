@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import "../../styles/VaoProfile.css";
+import "../../Styles/VaoProfile.css";
 
 /* ─────────────────────────────────────────────
    STEPS

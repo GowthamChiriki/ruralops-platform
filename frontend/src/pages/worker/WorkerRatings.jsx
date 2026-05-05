@@ -1,4 +1,4 @@
-import "../../styles//WorkerRatings.css";
+import "../../Styles//WorkerRatings.css";
 
 export default function WorkerRatings(){
 

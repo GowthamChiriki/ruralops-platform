@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useNavigate } from "react-router-dom"  // ✅ removed useParams — worker identity from JWT
 import Navbar from "../../components/Navbar"
 import Footer from "../../components/Footer"
-import "../../styles/WorkerNotifications.css"
+import "../../Styles/WorkerNotifications.css"
 
 /* ─── API base — single source of truth ─── */
 const API = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app"

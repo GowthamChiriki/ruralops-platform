@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import "../styles/StatusCheck.css";
+import "../Styles/StatusCheck.css";
 
 const API =
   import.meta.env.VITE_API_BASE_URL ??

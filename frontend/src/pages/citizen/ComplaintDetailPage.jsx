@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import "../../styles/ComplaintDetail.css";
+import "../../Styles/ComplaintDetail.css";
 
 /* Fix — centralised API base URL */
 const API = "https://ruralops-platform-production.up.railway.app";

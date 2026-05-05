@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import "../../styles/WorkerTasks.css";
+import "../../Styles/WorkerTasks.css";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 

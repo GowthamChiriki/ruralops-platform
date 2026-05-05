@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import "../../styles//WorkerOverview.css";
+import "../../Styles//WorkerOverview.css";
 
 /* =========================================================
    TIME CALCULATION
