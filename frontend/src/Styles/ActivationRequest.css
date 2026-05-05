@@ -214,7 +214,7 @@
    PAGE
 ========================================== */
 .ar-page {
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - var(--nav-h));
   background-color: var(--ar-bg);
   position: relative;
   overflow-x: hidden;
@@ -245,7 +245,7 @@
   grid-template-columns: 1fr 420px;
   align-items: start;
   gap: 40px;
-  padding: 52px 4% 0;
+  padding: calc(var(--nav-h) + 20px) 4% 0;
 }
 
 /* ──────────────────────────────────────────

@@ -578,7 +578,7 @@ const CSS = `
 /* ════ HERO ════ */
 .csp-hero {
   position: relative;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - var(--nav-h));
   display: flex;
   align-items: stretch;
   overflow: hidden;
@@ -602,8 +602,8 @@ const CSS = `
 .csp-inner {
   position: relative; z-index: 3; width: 100%;
   display: flex; align-items: center;
-  padding: 110px 5% 4rem; gap: 4rem;
-  min-height: calc(100vh - 72px);
+  padding: calc(var(--nav-h) + 20px) 5% 4rem; gap: 4rem;
+  min-height: calc(100vh - var(--nav-h));
 }
 
 /* ════ LEFT PANEL ════ */

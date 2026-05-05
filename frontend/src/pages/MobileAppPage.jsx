@@ -529,12 +529,13 @@ function MobileAppPage() {
         }
       `}</style>
 
-      <div className="mob-page-wrap" style={{ position:"relative", zIndex:1 }}>
+      <Navbar />
+      <div className="mob-page-wrap" style={{ position:"relative", zIndex:1, paddingTop: "var(--nav-h)" }}>
 
         {/* ══════════════════════════════════════
             HERO
         ══════════════════════════════════════ */}
-        <div style={{ maxWidth:"1180px", margin:"0 auto", padding:"120px 6% 60px", display:"grid", gridTemplateColumns:"1fr 320px", gap:"80px", alignItems:"center", position:"relative" }}>
+        <div style={{ maxWidth:"1180px", margin:"0 auto", padding:"60px 6% 60px", display:"grid", gridTemplateColumns:"1fr 320px", gap:"80px", alignItems:"center", position:"relative" }}>
 
           {/* LEFT */}
           <div style={{ display:"flex", flexDirection:"column" }}>

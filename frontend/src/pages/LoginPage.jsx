@@ -224,7 +224,7 @@ const CSS = `
 .lgp-inner {
   position: relative; z-index: 3; width: 100%;
   display: flex; align-items: center;
-  padding: 110px 5% 4rem; gap: 4rem;
+  padding: calc(var(--nav-h) + 30px) 5% 4rem; gap: 4rem;
   min-height: 100vh;
 }
 
@@ -568,6 +568,18 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      const accountType = localStorage.getItem("accountType");
+      const accountId = localStorage.getItem("accountId");
+      if (accountType === "CITIZEN") navigate("/citizen/dashboard");
+      else if (accountType === "VAO") navigate(`/vao/dashboard/${accountId}`);
+      else if (accountType === "WORKER") navigate("/worker/dashboard");
+      else if (accountType === "MAO") navigate("/mao/dashboard");
+    }
+  }, [navigate]);
   const [toasts, setToasts] = useState([]);
   const [role, setRole] = useState(null);   // shown after successful login
   const [phoneErr, setPhoneErr] = useState("");

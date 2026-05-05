@@ -108,7 +108,8 @@ input  { font-family: var(--f-body); }
 .mao-layout {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - var(--nav-h));
+  padding-top: var(--nav-h);
   background: var(--bg-base);
   transition: grid-template-columns 0.28s ease;
 }

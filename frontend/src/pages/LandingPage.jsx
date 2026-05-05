@@ -185,7 +185,7 @@ export default function LandingPage() {
             width: 100%;
             display: flex;
             align-items: center;
-            padding: 110px 8% 70px;
+            padding: calc(var(--nav-h) + 20px) 8% 70px;
             gap: 56px;
           }
 
@@ -226,35 +226,44 @@ export default function LandingPage() {
             max-width: 430px;
           }
 
-          .lp-hero-btns { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; flex-wrap: wrap; }
+          .lp-hero-btns { display: flex; align-items: center; gap: 14px; margin-bottom: 44px; flex-wrap: wrap; }
 
           .lp-btn-primary {
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
             color: white;
-            padding: 11px 22px;
-            border-radius: 10px;
+            padding: 12px 28px;
+            border-radius: 14px;
             font-weight: 700;
-            display: flex; align-items: center; gap: 7px;
-            transition: 0.22s;
+            display: flex; align-items: center; gap: 10px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             text-decoration: none;
-            font-size: 13.5px;
+            font-size: 15px;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.25);
           }
-          .lp-btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
+          .lp-btn-primary:hover { 
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: 0 12px 30px rgba(34, 197, 94, 0.4); 
+            filter: brightness(1.1);
+          }
 
           .lp-btn-ghost {
-            background: rgba(255,255,255,0.11);
-            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
             color: white;
-            padding: 11px 22px;
-            border-radius: 10px;
+            padding: 12px 28px;
+            border-radius: 14px;
             font-weight: 700;
-            display: flex; align-items: center; gap: 7px;
-            transition: 0.22s;
+            display: flex; align-items: center; gap: 10px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             text-decoration: none;
-            font-size: 13.5px;
-            border: 1px solid rgba(255,255,255,0.18);
+            font-size: 15px;
+            border: 1px solid rgba(255,255,255,0.15);
           }
-          .lp-btn-ghost:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+          .lp-btn-ghost:hover { 
+            background: rgba(255,255,255,0.15); 
+            transform: translateY(-3px);
+            border-color: rgba(255,255,255,0.3);
+          }
 
           .lp-hero-stats {
             display: flex;

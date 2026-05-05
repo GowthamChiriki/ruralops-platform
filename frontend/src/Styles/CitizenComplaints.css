@@ -13,6 +13,7 @@
 /* ─── Page Shell ─── */
 .cc-page {
   min-height: 100vh;
+  padding-top: var(--nav-h);
   background: var(--bg-main, #04070a);
   position: relative;
   overflow-x: hidden;

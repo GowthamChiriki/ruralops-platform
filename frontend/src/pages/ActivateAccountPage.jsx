@@ -304,8 +304,8 @@ const CSS = `
 .aap-inner {
   position: relative; z-index: 3; width: 100%;
   display: flex; align-items: center;
-  padding: 3rem 5%; gap: 4rem;
-  min-height: calc(100vh - 64px);
+  padding: calc(var(--nav-h) + 20px) 5% 4rem; gap: 4rem;
+  min-height: calc(100vh - var(--nav-h));
 }
 
 /* ════ LEFT PANEL ════ */

@@ -55,6 +55,7 @@
 /* ─── Page ─── */
 .wt-page {
   min-height: 100vh;
+  padding-top: var(--nav-h);
   background: var(--wt-bg);
   color: var(--wt-t1);
   font-family: var(--wt-ff-body);

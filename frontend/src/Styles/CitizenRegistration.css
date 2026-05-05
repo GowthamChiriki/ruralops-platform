@@ -89,6 +89,7 @@
   background: var(--bg);
   color: var(--text-1);
   min-height: 100vh;
+  padding-top: var(--nav-h);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background var(--ts), color var(--ts);

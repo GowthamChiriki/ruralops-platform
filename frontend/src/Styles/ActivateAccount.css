@@ -90,7 +90,7 @@
 /* ── LEFT ── */
 .aa-left {
   flex: 1; display: flex; flex-direction: column; justify-content: center;
-  padding: 110px 6% 64px 7%;
+  padding: calc(var(--nav-h) + 20px) 6% 64px 7%;
   position: relative; z-index: 1;
   animation: fadeUp var(--t-slow) var(--ease) .06s both;
 }
@@ -103,7 +103,7 @@
 .aa-right {
   flex-shrink: 0; width: 520px;
   display: flex; align-items: center; justify-content: center;
-  padding: 100px 7% 52px 5%;
+  padding: var(--nav-h) 7% 52px 5%;
   position: relative; z-index: 1;
 }
 

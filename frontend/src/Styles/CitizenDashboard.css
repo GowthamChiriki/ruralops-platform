@@ -136,7 +136,13 @@ body {
 /* ═══════════════════════════════════════════════════════════════════
    PAGE SHELL
 ═══════════════════════════════════════════════════════════════════ */
-.cd-page { position: relative; min-height: 100vh; background: var(--bg); overflow-x: hidden; }
+.cd-page { 
+  position: relative; 
+  min-height: 100vh; 
+  background: var(--bg); 
+  overflow-x: hidden; 
+  padding-top: var(--nav-h);
+}
 
 .cd-ambient {
   position: fixed; inset: 0; pointer-events: none; z-index: 0;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, FileText, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft,
@@ -310,7 +311,7 @@ const CSS = `
 /* ════ HERO ════ */
 .crp-hero {
   position: relative;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - var(--nav-h));
   display: flex; align-items: stretch; overflow: hidden;
 }
 .crp-bg-img {
@@ -324,8 +325,8 @@ const CSS = `
 .crp-inner {
   position: relative; z-index: 3; width: 100%;
   display: flex; align-items: center;
-  padding: 110px 5% 4rem; gap: 4rem;
-  min-height: calc(100vh - 72px);
+  padding: calc(var(--nav-h) + 20px) 5% 4rem; gap: 4rem;
+  min-height: calc(100vh - var(--nav-h));
 }
 
 /* ════ LEFT ════ */
@@ -679,6 +680,7 @@ const CSS = `
    PAGE COMPONENT
 ══════════════════════════════════════════ */
 export default function CitizenRegistrationPage() {
+  const navigate = useNavigate();
   const dark = useDark();
   const toast = useToasts();
 
@@ -687,6 +689,18 @@ export default function CitizenRegistrationPage() {
   const [touched, setTouched] = useState({});
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // If already logged in, redirect to dashboard to prevent confusion
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      const accountType = localStorage.getItem("accountType");
+      if (accountType === "CITIZEN") navigate("/citizen/dashboard");
+      // If it's another role, maybe they want to register a citizen? 
+      // But user says it "feels logged in", so let's at least clear old non-citizen tokens
+      // or redirect them. For now, let's just clear if they are here to register fresh.
+    }
+  }, [navigate]);
 
   const validate = (name, value) => validators[name]?.(value) ?? "";
   const validateStep = s => {
