@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import "../styles/MaoDashboard.css";
+import "../Styles/MaoDashboard.css";
 
 function MaoDashboard() {
 
