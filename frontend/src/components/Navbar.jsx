@@ -98,38 +98,47 @@ export default function Navbar() {
     setSwitching(true);
     setRoleOpen(false);
 
-    const refreshToken = localStorage.getItem("refreshToken");
+    const currentToken = localStorage.getItem("accessToken");
     
     try {
-      // 1. Attempt to refresh token with the specific role context
-      const res = await fetch(`${API}/auth/refresh`, {
+      // 1. Call the specific role switching endpoint with the current token
+      const res = await fetch(`${API}/auth/switch-role`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken, role: newRole }),
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${currentToken}`
+        },
+        body: JSON.stringify({ role: newRole }),
       });
 
       if (!res.ok) throw new Error("Switch failed");
 
       const data = await res.json();
       
-      // 2. Persist new session state
+      // 2. Update session with the new role-specific token
       localStorage.setItem("accessToken",  data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      // Preserve existing refresh token if the switch response doesn't provide a new one
+      if (data.refreshToken) {
+        localStorage.setItem("refreshToken", data.refreshToken);
+      }
       localStorage.setItem("accountType",  newRole);
+      localStorage.setItem("accountId",    data.accountId);
+      localStorage.setItem("villageId",    data.villageId ?? "");
       
-      // 3. Determine target destination
+      // 3. Navigate to the appropriate dashboard
       const path = ROLE_CONFIG[newRole]?.path || "/";
       if (newRole === "VAO") {
-        navigate(`${path}/${accountId}`);
+        navigate(`${path}/${data.accountId}`);
       } else {
         navigate(path);
       }
       
-      // 4. Reload to flush old portal state
+      // 4. Force a clean reload to initialize the new portal context
       window.location.reload();
     } catch (err) {
       console.error("Role switch error:", err);
-      // Fallback: update local type and hope the page's own tryRefresh handles it
+      // Fallback: update accountType and reload, though backend may still 403 
+      // if the token doesn't have the necessary claims.
       localStorage.setItem("accountType", newRole);
       window.location.reload();
     } finally {
