@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import "../Styles/ActivationRequest.css";
 
 /* ─────────────────────────────────────────
@@ -539,19 +540,7 @@ export default function ActivationKeyRequestPage() {
 
         </div>{/* /ar-main */}
 
-        {/* ── FOOTER ── */}
-        <footer className="ar-footer">
-          <div className="ar-footer-left">
-            <strong>RuralOps Platform</strong>
-            <span>Digital Infrastructure for Rural Governance</span>
-          </div>
-          <div className="ar-footer-center">© 2026 RuralOps — AKSHAY PODENDLA</div>
-          <div className="ar-footer-links">
-            <a href="#">Privacy</a>
-            <a href="#">Security</a>
-            <a href="#">Support</a>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </>
   );

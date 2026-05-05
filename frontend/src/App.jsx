@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
 
 /* ── PUBLIC ── */
 import LandingPage   from "./pages/LandingPage";
@@ -152,6 +153,12 @@ function Unauthorized() {
    APP
 ================================================================ */
 export default function App() {
+  useEffect(() => {
+    const theme = localStorage.getItem("ruralops-theme") || 
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

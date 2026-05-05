@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 /* ==========================================
    FONTS injected via style tag
@@ -532,7 +534,7 @@ function MobileAppPage() {
         {/* ══════════════════════════════════════
             HERO
         ══════════════════════════════════════ */}
-        <div style={{ maxWidth:"1180px", margin:"0 auto", padding:"72px 6% 60px", display:"grid", gridTemplateColumns:"1fr 320px", gap:"80px", alignItems:"center", position:"relative" }}>
+        <div style={{ maxWidth:"1180px", margin:"0 auto", padding:"120px 6% 60px", display:"grid", gridTemplateColumns:"1fr 320px", gap:"80px", alignItems:"center", position:"relative" }}>
 
           {/* LEFT */}
           <div style={{ display:"flex", flexDirection:"column" }}>
@@ -862,31 +864,7 @@ function MobileAppPage() {
           </div>
         </div>
 
-        {/* ══════════════════════════════════════
-            FOOTER
-        ══════════════════════════════════════ */}
-        <footer style={{
-          padding:"22px 6%",
-          borderTop:"1px solid rgba(201,162,39,.10)",
-          display:"flex", justifyContent:"space-between", alignItems:"center",
-          background:"#060b0d",
-          color:"rgba(93,120,93,.70)",
-          fontFamily:"'Cinzel', serif", fontSize:"10px", letterSpacing:".05em",
-        }}>
-          <div style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
-            <strong style={{ color:"#c9a227", fontSize:"12px", letterSpacing:".10em" }}>RuralOps Platform</strong>
-            <span>Digital Rural Governance Infrastructure</span>
-          </div>
-          <div>© 2026 RuralOps — GOWTHAM CHIRIKI</div>
-          <div style={{ display:"flex", gap:"18px" }}>
-            {["Privacy", "Security", "Support"].map(l => (
-              <a key={l} href="#" style={{ textDecoration:"none", color:"rgba(93,120,93,.60)", fontSize:"10px", letterSpacing:".10em", textTransform:"uppercase", transition:"color .2s" }}
-                onMouseEnter={e => e.target.style.color="#c9a227"}
-                onMouseLeave={e => e.target.style.color="rgba(93,120,93,.60)"}
-              >{l}</a>
-            ))}
-          </div>
-        </footer>
+        <Footer />
 
       </div>
     </div>

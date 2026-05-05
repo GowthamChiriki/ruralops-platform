@@ -113,12 +113,12 @@ const T = {
 };
 
 const GOVERNANCE_QUOTES = [
-  "Service above self — accountability above all.",
-  "The measure of leadership is the welfare of those you serve.",
-  "Good governance is the foundation of prosperous communities.",
-  "Every record kept, every complaint heard, every citizen served.",
-  "Transparency, accountability, integrity — the three pillars.",
-  "An officer's duty ends only when the village thrives.",
+  "Accountability is the bedrock of professional administration.",
+  "Efficient service delivery is our primary objective.",
+  "Integrity in data ensures transparency in governance.",
+  "Digital empowerment drives rural development.",
+  "Responsive administration leads to resilient communities.",
+  "Transparency is the catalyst for public trust.",
 ];
 function getRandomQuote() {
   return GOVERNANCE_QUOTES[Math.floor(Math.random() * GOVERNANCE_QUOTES.length)];
@@ -135,11 +135,9 @@ function resolvePhotoUrl(obj)     { return normalizeUrl(obj?.profilePhotoUrl || 
 function resolveSignatureUrl(obj) { return normalizeUrl(obj?.signaturePhotoUrl || obj?.signatureUrl || obj?.signature || null); }
 function getGreeting() {
   const h = new Date().getHours();
-  if (h < 6)  return "Early hours,";
-  if (h < 12) return "Good morning,";
-  if (h < 17) return "Good afternoon,";
-  if (h < 21) return "Good evening,";
-  return "Good night,";
+  if (h < 12) return "Good Morning";
+  if (h < 17) return "Good Afternoon";
+  return "Good Evening";
 }
 function timeAgo(d) {
   if (!d) return "";
@@ -528,7 +526,7 @@ function AreaModal({ open, onClose, vaoId, onSuccess }) {
               {newName && <button className="vd-search__clr" onClick={() => setNewName("")}>✕</button>}
             </div>
             <button className="vd-btn vd-btn--teal" onClick={handleCreate} disabled={creating || !newName.trim()} style={{ whiteSpace: "nowrap", minWidth: 130 }}>
-              {creating ? <><div className="vd-spin vd-spin--sm" /> Creating…</> : "+ Claim Territory"}
+              {creating ? <><div className="vd-spin vd-spin--sm" /> Processing…</> : "+ Register Area"}
             </button>
           </div>
           {createErr && <p className="vd-area-create__err">⚠ {createErr}</p>}
@@ -536,7 +534,7 @@ function AreaModal({ open, onClose, vaoId, onSuccess }) {
         <div className="vd-modal__body vd-area-list-body">
           {areaLoading ? <div className="vd-modal__loading"><div className="vd-spin" /><p>Loading…</p></div>
           : areaErr ? <div className="vd-modal__err">⚠️ {areaErr} <button className="vd-errbar__btn" onClick={load}>↻ Retry</button></div>
-          : areas.length === 0 ? <div className="vd-empty" style={{ padding: "32px 20px" }}><p className="vd-empty__ic">🗺</p><p className="vd-empty__t">No areas yet</p></div>
+          : areas.length === 0 ? <div className="vd-empty" style={{ padding: "32px 20px" }}><p className="vd-empty__ic">🗺</p><p className="vd-empty__t">No areas registered yet</p></div>
           : (
             <div className="vd-area-grid">
               {areas.map((a, i) => (
@@ -550,7 +548,7 @@ function AreaModal({ open, onClose, vaoId, onSuccess }) {
           )}
         </div>
         <div className="vd-modal__foot">
-          <span style={{ fontFamily: "var(--fh)", fontSize: 10, color: "var(--t3)", letterSpacing: ".06em" }}>{areas.length} {areas.length === 1 ? "territory" : "territories"}</span>
+          <span style={{ fontFamily: "var(--fh)", fontSize: 10, color: "var(--t3)", letterSpacing: ".06em" }}>{areas.length} {areas.length === 1 ? "area" : "areas"}</span>
           <button className="vd-btn vd-btn--ghost" onClick={onClose}>Close</button>
         </div>
       </div>
@@ -572,9 +570,12 @@ function CommandBanner({ vaoName, quote }) {
   return (
     <div className="vd-command-banner">
       <div className="vd-command-banner__bg" />
-      <p className="vd-command-banner__eyebrow"><span className="vd-command-banner__dot" />Rural Operations · Village Administrative Officer · Command Hall</p>
+      <p className="vd-command-banner__eyebrow">
+        <span className="vd-command-banner__dot" />
+        Official Portal · Village Administrative Officer · Dashboard
+      </p>
       <h2 className="vd-command-banner__title">
-        <span className="vd-reveal-greeting"><span className="word">{getGreeting()}&nbsp;</span></span>
+        <span className="vd-reveal-greeting"><span className="word">{getGreeting()},&nbsp;</span></span>
         <span className="vd-reveal-name">
           {nameParts.map((word, i) => (
             <span key={i} className={i === nameParts.length - 1 ? "vd-reveal-name__surname word" : "vd-reveal-name__first"}
@@ -582,7 +583,7 @@ function CommandBanner({ vaoName, quote }) {
           ))}
         </span>
       </h2>
-      <p className="vd-command-banner__quote">"{quote}"</p>
+      <p className="vd-command-banner__quote">{quote}</p>
       <div className="vd-command-banner__divider" />
     </div>
   );
@@ -708,7 +709,7 @@ function OverviewAnalytics({ citizens, workers, complaints, areas, complianceDat
         <KpiCard icon="👥" label="Citizens"   value={cTotal}  sub={`${approvalRate}% approved`}  color="#c9a227" onClick={onCitizens}    delay={0} />
         <KpiCard icon="⚒"  label="Workers"    value={wTotal}  sub={`${workerUtilRate}% active`}  color="#3d9960" onClick={onWorkers}     delay={0.05} />
         <KpiCard icon="📋" label="Complaints" value={coTotal} sub={`${resolutionRate}% resolved`} color="#b03a2e" onClick={onComplaints}  delay={0.10} />
-        <KpiCard icon="🗺" label="Areas"      value={aTotal}  sub="Territories mapped"            color="#2a7a8c"                         delay={0.15} />
+        <KpiCard icon="🗺" label="Areas"      value={aTotal}  sub="Jurisdictions mapped"          color="#2a7a8c"                         delay={0.15} />
         <KpiCard icon="⏳" label="Pending"    value={cPend}   sub="Awaiting approval"             color="#d4881a" onClick={goToApprovals} delay={0.20} />
         <KpiCard icon="🚨" label="Unassigned" value={coUna}   sub="No worker assigned"            color="#e8630a" onClick={goToUnassigned} delay={0.25} />
       </div>
@@ -747,7 +748,7 @@ function OverviewAnalytics({ citizens, workers, complaints, areas, complianceDat
       </div>
       {(cPend > 0 || coUna > 0 || coVerif > 0) && (
         <div className="alert-row">
-          {cPend  > 0 && (<div className="alert-card alert-card--amber"><div className="alert-card__icon">⏳</div><div className="alert-card__body"><p className="alert-card__title">{cPend} Citizen{cPend !== 1 ? "s" : ""} Awaiting Approval</p><p className="alert-card__sub">Council action required · Pending for review</p></div><button className="vd-btn vd-btn--amber vd-btn--sm" onClick={goToApprovals}>Review →</button></div>)}
+          {cPend  > 0 && (<div className="alert-card alert-card--amber"><div className="alert-card__icon">⏳</div><div className="alert-card__body"><p className="alert-card__title">{cPend} Citizen{cPend !== 1 ? "s" : ""} Awaiting Approval</p><p className="alert-card__sub">Administrative action required · Awaiting review</p></div><button className="vd-btn vd-btn--amber vd-btn--sm" onClick={goToApprovals}>Review →</button></div>)}
           {coUna  > 0 && (<div className="alert-card alert-card--rose"><div className="alert-card__icon">🚨</div><div className="alert-card__body"><p className="alert-card__title">{coUna} Complaint{coUna !== 1 ? "s" : ""} Without Worker</p><p className="alert-card__sub">SUBMITTED &amp; AWAITING_ASSIGNMENT — needs assignment</p></div><button className="vd-btn vd-btn--crimson vd-btn--sm" onClick={goToUnassigned}>Assign →</button></div>)}
           {coVerif > 0 && (<div className="alert-card alert-card--violet"><div className="alert-card__icon">🛡️</div><div className="alert-card__body"><p className="alert-card__title">{coVerif} Complaint{coVerif !== 1 ? "s" : ""} Ready to Close</p><p className="alert-card__sub">Workers completed · Verified — your sign-off required</p></div><button className="vd-btn vd-btn--violet vd-btn--sm" onClick={goToVerified}>Review &amp; Close →</button></div>)}
         </div>
@@ -780,7 +781,7 @@ function AnalyticsTab({ citizens, workers, complaints, areas, complianceData, go
         <KpiCard icon="⚒"  label="Worker Util."   value={workerUtilRate} sub="Active workforce %"     color="#2a7a8c" delay={0.10} />
         <KpiCard icon="✅" label="Resolution"     value={resolutionRate} sub="Complaints resolved %"  color="#3d9960" delay={0.15} />
         <KpiCard icon="⏳" label="Pending Rate"   value={pendingRate}    sub="Open issues %"          color="#d4881a" delay={0.20} />
-        <KpiCard icon="🗺" label="Areas"          value={aTotal}         sub="Territories active"     color="#2a7a8c" delay={0.25} />
+        <KpiCard icon="🗺" label="Areas"          value={aTotal}         sub="Active Areas"           color="#2a7a8c" delay={0.25} />
       </div>
 
       <div className="analytics-grid-3-wide">
@@ -850,7 +851,7 @@ function AnalyticsTab({ citizens, workers, complaints, areas, complianceData, go
             <div style={{ padding: "20px", color: "var(--t3)", fontFamily: "var(--fh)", fontSize: 10, textAlign: "center" }}>No workers provisioned yet</div>
           ) : (
             <div className="worker-perf-grid">
-              {[{ n: wAct, l: "Active", pts: "Serving the realm", c: "#3d9960" }, { n: wLeave, l: "On Leave", pts: "Temporarily absent", c: "#d4881a" }, { n: wInact, l: "Inactive", pts: "Not operational", c: "#b03a2e" }, { n: wPend, l: "Pending", pts: "Awaiting activation", c: "#6b3fa0" }]
+              {[{ n: wAct, l: "Active", pts: "Currently serving", c: "#3d9960" }, { n: wLeave, l: "On Leave", pts: "Temporarily absent", c: "#d4881a" }, { n: wInact, l: "Inactive", pts: "Not operational", c: "#b03a2e" }, { n: wPend, l: "Pending", pts: "Awaiting activation", c: "#6b3fa0" }]
                 .map(({ n, l, pts, c }) => (
                   <div key={l} className="worker-perf-stat" style={{ "--wpc": c }}>
                     <div className="worker-perf-stat__ring">
@@ -1147,9 +1148,9 @@ export default function VaoDashboard() {
       <div className="vd-page">
         <div className="vd-ambient"><div className="vd-orb vd-orb-1" /><div className="vd-orb vd-orb-2" /><div className="vd-grid" /></div>
         <div className="vd-unauth">
-          <div className="vd-unauth__icon">⚔</div><div className="vd-unauth__code">401</div>
+          <div className="vd-unauth__icon">🔒</div><div className="vd-unauth__code">401</div>
           <h2 className="vd-unauth__title">Unauthorised Access</h2>
-          <p className="vd-unauth__msg">You do not hold the authority to enter this hall.</p>
+          <p className="vd-unauth__msg">You do not have authorization to access this portal.</p>
           <div className="vd-unauth__btns"><a href="/login" className="vd-btn vd-btn--primary">→ Login</a><a href="/" className="vd-btn vd-btn--ghost">← Home</a></div>
         </div>
       </div><Footer /></>
@@ -1175,7 +1176,7 @@ export default function VaoDashboard() {
     <><Navbar />
       <div className="vd-page">
         <div className="vd-ambient"><div className="vd-orb vd-orb-1" /><div className="vd-orb vd-orb-2" /><div className="vd-orb vd-orb-3" /><div className="vd-grid" /></div>
-        <div className="vd-loadscreen"><div className="vd-spin vd-spin--lg" /><p>Loading Command Hall…</p></div>
+        <div className="vd-loadscreen"><div className="vd-spin vd-spin--lg" /><p>Initialising Dashboard…</p></div>
       </div><Footer /></>
   );
 
@@ -1186,9 +1187,9 @@ export default function VaoDashboard() {
         <div className={`vd-dash${visible ? " vd-dash--vis" : ""}`}>
           <div className="vd-setup">
             <div className="vd-setup__icon">⚙️</div>
-            <h2>Oath Not Yet Sworn</h2>
-            <p>Complete your VAO profile to activate the command hall.</p>
-            <button className="vd-btn vd-btn--primary vd-btn--lg" onClick={() => nav(`/vao/profile/${vaoId}`)}>Complete the Oath →</button>
+            <h2>Profile Incomplete</h2>
+            <p>Complete your VAO profile to access administrative tools.</p>
+            <button className="vd-btn vd-btn--primary vd-btn--lg" onClick={() => nav(`/vao/profile/${vaoId}`)}>Complete Profile Setup →</button>
           </div>
         </div>
       </div><Footer /></>
@@ -1213,7 +1214,7 @@ export default function VaoDashboard() {
     <><Navbar />
       <ToastStack toasts={toasts} onDismiss={id => setToasts(t => t.filter(x => x.id !== id))} />
       <CitizenModal open={citModal} onClose={() => { setCitModal(false); setSelCitizen(null); }} loading={citLoading} citizen={selCitizen} />
-      <AreaModal open={areaModal} onClose={() => setAreaModal(false)} vaoId={vaoId} onSuccess={() => { fetchAreas(); addToast("success", "Territory claimed!"); }} />
+      <AreaModal open={areaModal} onClose={() => setAreaModal(false)} vaoId={vaoId} onSuccess={() => { fetchAreas(); addToast("success", "Area registered successfully!"); }} />
 
       {/* ← CHANGE 3B: Profile modal — opens on profile button click, Update button navigates to form */}
       <VaoProfileModal
@@ -1257,7 +1258,7 @@ export default function VaoDashboard() {
             </div>
             <div className="vd-header__body">
               <div className="vd-header__left">
-                <div className="vd-eyebrow"><span className="vd-eyebrow__dot" />Rural Ops · VAO Command Hall</div>
+                <div className="vd-eyebrow"><span className="vd-eyebrow__dot" />Rural Ops · VAO Official Portal</div>
                 <div className="vd-header__namerow">
                   <h1 className="vd-header__name">
                     <span>{(vaoName || "").split(" ").slice(0, -1).join(" ")}</span>
@@ -1265,7 +1266,7 @@ export default function VaoDashboard() {
                   </h1>
                 </div>
                 <div className="vd-identity-bar">
-                  {villageName && (<div className="vd-identity-item vd-identity-item--village"><span className="vd-identity-item__ic">⚔</span><span className="vd-identity-item__val">{villageName}</span></div>)}
+                  {villageName && (<div className="vd-identity-item vd-identity-item--village"><span className="vd-identity-item__ic">📍</span><span className="vd-identity-item__val">{villageName}</span></div>)}
                   <div className="vd-identity-sep" />
                   <div className="vd-identity-item"><span className="vd-identity-item__ic">🪪</span><span className="vd-identity-item__lbl">VAO ID</span><span className="vd-identity-item__val vd-identity-item__val--mono">{vaoId}</span></div>
                   <div className="vd-identity-sep" />
@@ -1342,10 +1343,10 @@ export default function VaoDashboard() {
                   </div>
                 </div>
                 <div className="vd-panel">
-                  <SectionHdr title="🗺 Areas" sub={`${totalAreas} territories`} action={() => setAreaModal(true)} actionLabel="+ Add" />
+                  <SectionHdr title="🗺 Areas" sub={`${totalAreas} areas registered`} action={() => setAreaModal(true)} actionLabel="+ Add" />
                   <div className="vd-panel__body">
                     {totalAreas === 0 ? (
-                      <div className="vd-empty-sm"><p>No areas mapped yet</p><button className="vd-btn vd-btn--teal vd-btn--sm" style={{ marginTop: 8 }} onClick={() => setAreaModal(true)}>+ Claim First Area</button></div>
+                      <div className="vd-empty-sm"><p>No areas registered yet</p><button className="vd-btn vd-btn--teal vd-btn--sm" style={{ marginTop: 8 }} onClick={() => setAreaModal(true)}>+ Register First Area</button></div>
                     ) : (
                       <div className="vd-area-chips-compact">
                         {areas.slice(0, 10).map((a, i) => (<button key={a.id} className="vd-area-chip-sm" style={{ animationDelay: `${i * 0.05}s` }} onClick={() => goToAreaComplaints(a.id)}>🏘 {a.name}</button>))}
@@ -1457,9 +1458,9 @@ export default function VaoDashboard() {
                 <KpiCard icon="⚒"  label="Workers"    value={totalWork}  sub="Covering realm"   color="#3d9960" delay={0.10} />
               </div>
               <div className="vd-full-panel">
-                <div className="vd-full-panel__hdr"><div><h3 className="vd-card-ttl">🗺 Village Territories</h3><p className="vd-card-sub">{totalAreas} areas · {villageName || "your village"}</p></div><button className="vd-btn vd-btn--teal" onClick={() => setAreaModal(true)}>+ Claim Territory</button></div>
+                <div className="vd-full-panel__hdr"><div><h3 className="vd-card-ttl">🗺 Village Jurisdictions</h3><p className="vd-card-sub">{totalAreas} areas · {villageName || "your village"}</p></div><button className="vd-btn vd-btn--teal" onClick={() => setAreaModal(true)}>+ Register Area</button></div>
                 {totalAreas === 0 ? (
-                  <div className="vd-empty" style={{ padding: "60px 20px" }}><p className="vd-empty__ic">🗺</p><p className="vd-empty__t">No territories yet</p><button className="vd-btn vd-btn--teal" style={{ marginTop: 18 }} onClick={() => setAreaModal(true)}>+ Claim First Territory</button></div>
+                  <div className="vd-empty" style={{ padding: "60px 20px" }}><p className="vd-empty__ic">🗺</p><p className="vd-empty__t">No areas registered yet</p><button className="vd-btn vd-btn--teal" style={{ marginTop: 18 }} onClick={() => setAreaModal(true)}>+ Register First Area</button></div>
                 ) : (
                   <div className="vd-areas-tab-grid">
                     {areas.map((a, i) => (
@@ -1470,7 +1471,7 @@ export default function VaoDashboard() {
                         <button className="vd-act act-view" style={{ marginTop: 8, width: "100%", justifyContent: "center", display: "flex" }} onClick={() => goToAreaComplaints(a.id)}>📋 Complaints</button>
                       </div>
                     ))}
-                    <button className="vd-area-full-card vd-area-full-card--add" onClick={() => setAreaModal(true)}><div className="vd-area-full-card__add-ic">+</div><p className="vd-area-full-card__add-lbl">Claim Territory</p></button>
+                    <button className="vd-area-full-card vd-area-full-card--add" onClick={() => setAreaModal(true)}><div className="vd-area-full-card__add-ic">+</div><p className="vd-area-full-card__add-lbl">Register Area</p></button>
                   </div>
                 )}
               </div>
