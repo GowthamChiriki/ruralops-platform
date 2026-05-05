@@ -177,6 +177,7 @@ export default function VaoDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastSynced, setLastSynced] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Initialization
   const vaoId = getAccountId();
@@ -185,6 +186,7 @@ export default function VaoDashboard() {
   const loadData = useCallback(async (showLoader = false) => {
     if (!token) { navigate("/login"); return; }
     if (showLoader) setLoading(true);
+    setIsSyncing(true);
     
     try {
       const [profRes, dashRes, citRes, workRes, compRes, areaRes] = await Promise.all([
@@ -209,6 +211,7 @@ export default function VaoDashboard() {
       setError(err.message);
     } finally {
       setLoading(false);
+      setIsSyncing(false);
     }
   }, [token, navigate]);
 
@@ -319,14 +322,18 @@ export default function VaoDashboard() {
             <header className="vao-dashboard-header">
               <div className="vao-header-title-wrap">
                 <h1>{TABS.find(t => t.id === activeTab)?.label}</h1>
-                <p>Welcome back, Officer {profile?.fullName?.split(" ")[0]}. Last synced {timeAgo(lastSynced)}.</p>
+                <p>Welcome back, Officer <strong>{profile?.fullName?.split(" ")[0]}</strong>. {lastSynced && `Last synced ${timeAgo(lastSynced)}.`}</p>
               </div>
               <div className="vao-header-actions">
-                <button className="nb-btn-secondary" onClick={() => loadData(true)}>
-                  <RefreshCw size={16} /> Sync Data
+                <button 
+                  className={`nb-btn-secondary ${isSyncing ? "loading" : ""}`} 
+                  onClick={() => loadData(false)}
+                  disabled={isSyncing}
+                >
+                  <RefreshCw size={16} /> {isSyncing ? "Syncing..." : "Sync Now"}
                 </button>
                 <button className="nb-btn-cta" onClick={() => setProfileModalOpen(true)}>
-                  <Settings size={16} /> Edit Profile
+                  <UserSquare2 size={16} /> Profile
                 </button>
               </div>
             </header>
@@ -515,18 +522,31 @@ function OverviewTab({ profile, dash, complianceScore, citizens, workers, compla
 
 function CitizensTab({ citizens, vaoId }) {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const filteredCitizens = citizens.filter(c => 
+    c.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.citizenId?.toString().includes(searchTerm)
+  );
+
   return (
     <div className="bento-card" style={{ gridColumn: "span 12" }}>
-      <div className="card-hdr">
+      <div className="card-hdr" style={{ borderBottom: "1px solid var(--border)", paddingBottom: "20px", marginBottom: "20px" }}>
         <h3 className="card-title">Citizen Directory</h3>
-        <div className="vao-header-actions">
-          <button className="nb-btn-secondary" onClick={() => navigate(`/vao/${vaoId}/citizens/approvals`)}>
-            <Shield size={14} /> Review Approvals
-          </button>
+        <div className="vao-header-actions" style={{ gap: "16px" }}>
           <div className="vao-search">
-            <Search size={16} />
-            <input type="text" placeholder="Search Citizens..." className="vao-search-input" />
+            <Search size={18} />
+            <input 
+              type="text" 
+              placeholder="Search by name or ID..." 
+              className="vao-search-input" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
+          <button className="nb-btn-cta" onClick={() => navigate(`/vao/${vaoId}/citizens/approvals`)}>
+            <Shield size={16} /> Review Approvals
+          </button>
         </div>
       </div>
       <div className="vd-table-container">
@@ -541,7 +561,7 @@ function CitizensTab({ citizens, vaoId }) {
             </tr>
           </thead>
           <tbody>
-            {citizens.map(c => (
+            {filteredCitizens.map(c => (
               <tr key={c.citizenId}>
                 <td>
                   <div className="vd-entity-cell">
@@ -555,7 +575,7 @@ function CitizensTab({ citizens, vaoId }) {
                 <td>
                   <button 
                     className="nb-btn-secondary" 
-                    style={{ padding: "4px 12px", fontSize: "12px" }}
+                    style={{ padding: "6px 16px", fontSize: "12px" }}
                     onClick={() => navigate(`/vao/profile/${vaoId}`)}
                   >
                     View Account
@@ -563,6 +583,9 @@ function CitizensTab({ citizens, vaoId }) {
                 </td>
               </tr>
             ))}
+            {filteredCitizens.length === 0 && (
+              <tr><td colSpan={5} style={{ textAlign: "center", padding: "60px", opacity: 0.5 }}>No citizens found matching your search.</td></tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -572,11 +595,32 @@ function CitizensTab({ citizens, vaoId }) {
 
 function WorkersTab({ workers, vaoId }) {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const filteredWorkers = workers.filter(w => 
+    w.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    w.workerId?.toString().includes(searchTerm)
+  );
+
   return (
     <div className="bento-card" style={{ gridColumn: "span 12" }}>
-      <div className="card-hdr">
-        <h3 className="card-title">Village Workers</h3>
-        <button className="nb-btn-cta" onClick={() => navigate(`/vao/${vaoId}/workers/add`)}>+ Hire Worker</button>
+      <div className="card-hdr" style={{ borderBottom: "1px solid var(--border)", paddingBottom: "20px", marginBottom: "20px" }}>
+        <h3 className="card-title">Village Workforce</h3>
+        <div className="vao-header-actions" style={{ gap: "16px" }}>
+          <div className="vao-search">
+            <Search size={18} />
+            <input 
+              type="text" 
+              placeholder="Find worker..." 
+              className="vao-search-input" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button className="nb-btn-cta" onClick={() => navigate(`/vao/${vaoId}/workers/add`)}>
+            <Plus size={16} /> Hire Worker
+          </button>
+        </div>
       </div>
       <div className="vd-table-container">
         <table className="vd-table">
@@ -590,7 +634,7 @@ function WorkersTab({ workers, vaoId }) {
             </tr>
           </thead>
           <tbody>
-            {workers.map(w => (
+            {filteredWorkers.map(w => (
               <tr key={w.workerId}>
                 <td>
                   <div className="vd-entity-cell">
@@ -598,13 +642,13 @@ function WorkersTab({ workers, vaoId }) {
                     <div style={{ fontWeight: "700" }}>{w.name}</div>
                   </div>
                 </td>
-                <td>Worker</td>
+                <td>Field Worker</td>
                 <td>{w.areaName || "Global"}</td>
                 <td><StatusPill status={w.status} /></td>
                 <td>
                   <button 
                     className="nb-btn-secondary" 
-                    style={{ padding: "4px 12px", fontSize: "12px" }}
+                    style={{ padding: "6px 16px", fontSize: "12px" }}
                     onClick={() => navigate(`/vao/${vaoId}/complaints/worker/${w.workerId}`)}
                   >
                     Assignments
@@ -612,6 +656,9 @@ function WorkersTab({ workers, vaoId }) {
                 </td>
               </tr>
             ))}
+            {filteredWorkers.length === 0 && (
+              <tr><td colSpan={5} style={{ textAlign: "center", padding: "60px", opacity: 0.5 }}>No workers matching your search.</td></tr>
+            )}
           </tbody>
         </table>
       </div>
