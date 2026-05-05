@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import logo from "../assets/ruralops-logo.png";
 
+const API = "https://ruralops-platform-production.up.railway.app";
+
 const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "Services", path: "/#services" },
@@ -43,6 +45,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const roleDropdownRef = useRef(null);
 
   // Auth State
@@ -78,6 +81,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("accountType");
     localStorage.removeItem("accountId");
     localStorage.removeItem("villageId");
@@ -85,15 +89,51 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  const switchRole = (newRole) => {
-    localStorage.setItem("accountType", newRole);
+  const switchRole = async (newRole) => {
+    if (newRole === accountType) {
+      setRoleOpen(false);
+      return;
+    }
+
+    setSwitching(true);
     setRoleOpen(false);
+
+    const refreshToken = localStorage.getItem("refreshToken");
     
-    const path = ROLE_CONFIG[newRole]?.path || "/";
-    if (newRole === "VAO") {
-      navigate(`${path}/${accountId}`);
-    } else {
-      navigate(path);
+    try {
+      // 1. Attempt to refresh token with the specific role context
+      const res = await fetch(`${API}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken, role: newRole }),
+      });
+
+      if (!res.ok) throw new Error("Switch failed");
+
+      const data = await res.json();
+      
+      // 2. Persist new session state
+      localStorage.setItem("accessToken",  data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem("accountType",  newRole);
+      
+      // 3. Determine target destination
+      const path = ROLE_CONFIG[newRole]?.path || "/";
+      if (newRole === "VAO") {
+        navigate(`${path}/${accountId}`);
+      } else {
+        navigate(path);
+      }
+      
+      // 4. Reload to flush old portal state
+      window.location.reload();
+    } catch (err) {
+      console.error("Role switch error:", err);
+      // Fallback: update local type and hope the page's own tryRefresh handles it
+      localStorage.setItem("accountType", newRole);
+      window.location.reload();
+    } finally {
+      setSwitching(false);
     }
   };
 
@@ -185,6 +225,12 @@ export default function Navbar() {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
+
+        @keyframes nb-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .nb-spin { animation: nb-spin 1.5s linear infinite; }
 
         .nb-dd-link {
           display: flex; align-items: center; gap: 10px;
@@ -340,10 +386,10 @@ export default function Navbar() {
                 onClick={() => setRoleOpen(!roleOpen)}
               >
                 <div className="nb-portal-icon" style={{ backgroundColor: currentRole.color }}>
-                  <currentRole.icon size={14} />
+                  {switching ? <RefreshCw size={14} className="nb-spin" /> : <currentRole.icon size={14} />}
                 </div>
-                <span>{currentRole.label}</span>
-                {roles.length > 1 && <ChevronDown size={14} opacity={0.5} />}
+                <span>{switching ? "Switching..." : currentRole.label}</span>
+                {roles.length > 1 && !switching && <ChevronDown size={14} opacity={0.5} />}
               </div>
 
               <AnimatePresence>
