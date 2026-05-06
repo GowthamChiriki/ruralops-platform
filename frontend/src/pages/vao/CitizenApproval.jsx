@@ -78,18 +78,14 @@ function useRequireRole(requiredRole) {
    Keeps fetching until an empty / partial page.
    Uses authFetch so 401/403 propagate correctly.
 ════════════════════════════════════════════ */
-async function fetchAllPages(urlBase, pageSize = 5) {
-  const all = [];
-  let page = 0;
-  const SAFETY = 500;
-
+async function fetchAllPages(urlBase) {
+  const all = []; let page = 0; const SAFETY = 100;
   while (page < SAFETY) {
-    const res  = await authFetch(`${urlBase}?page=${page}`);
-    const raw  = await res.json().catch(() => []);
-    const list = Array.isArray(raw) ? raw : (raw?.content ?? raw?.data ?? []);
+    const raw = await authFetch(`${urlBase}${urlBase.includes("?") ? "&" : "?"}page=${page}`);
+    const list = Array.isArray(raw) ? raw : (raw?.content ?? raw?.data ?? raw?.citizens ?? []);
     if (!list.length) break;
     all.push(...list);
-    if (list.length < pageSize) break;
+    if (raw?.last === true) break;
     page++;
   }
   return all;

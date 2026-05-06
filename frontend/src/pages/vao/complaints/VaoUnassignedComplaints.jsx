@@ -50,19 +50,6 @@ async function authFetch(url, options = {}) {
   return res.json();
 }
 
-async function fetchAllPages(urlBase) {
-  const all = []; let page = 0; const SAFETY = 100;
-  while (page < SAFETY) {
-    const raw = await authFetch(`${urlBase}${urlBase.includes("?") ? "&" : "?"}page=${page}`);
-    const list = Array.isArray(raw) ? raw : (raw?.content ?? raw?.data ?? raw?.complaints ?? []);
-    if (!list.length) break;
-    all.push(...list);
-    if (raw?.last === true) break;
-    page++;
-  }
-  return all;
-}
-
 /* ════════════════════════════════════════════
    ROLE GUARD HOOK — only ROLE_VAO may enter
 ════════════════════════════════════════════ */
@@ -162,8 +149,8 @@ export default function VaoUnassignedComplaints() {
     setAuthError(null);
 
     try {
-      const list = await fetchAllPages(`${BASE}/vao/complaints/village/unassigned`);
-      setComplaints(list);
+      const data = await authFetch(`${BASE}/vao/complaints/village/unassigned`);
+      setComplaints(Array.isArray(data) ? data : []);
     } catch (e) {
       if (e.code === 401) {
         setAuthError(e.message);

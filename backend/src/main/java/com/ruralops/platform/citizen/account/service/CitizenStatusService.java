@@ -82,7 +82,7 @@ public class CitizenStatusService {
 
         VaoAccount vao = vaoAccessGuard.requireActiveVao(userId);
 
-        Pageable pageable = PageRequest.of(page, 5);
+        Pageable pageable = PageRequest.of(page, 1000);
 
         Page<CitizenAccount> citizens =
                 citizenAccountRepository.findByVillage_Id(
@@ -99,7 +99,7 @@ public class CitizenStatusService {
 
         VaoAccount vao = vaoAccessGuard.requireActiveVao(userId);
 
-        Pageable pageable = PageRequest.of(page, 5);
+        Pageable pageable = PageRequest.of(page, 1000);
 
         Page<CitizenAccount> citizens =
                 citizenAccountRepository.findByVillage_IdAndStatus(

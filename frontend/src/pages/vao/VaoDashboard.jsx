@@ -197,17 +197,17 @@ export default function VaoDashboard() {
       if (profRes.ok) setProfile(await profRes.json());
       if (dashRes.ok) setDash(await dashRes.json());
 
-      const [citList, workList, compList, areaList] = await Promise.all([
+      const [citList, workRes, compRes, areaRes] = await Promise.all([
         fetchAllPages(`${BASE}/vao/citizens/all`),
-        fetchAllPages(`${BASE}/workers/village`),
-        fetchAllPages(`${BASE}/vao/complaints/village`),
-        fetchAllPages(`${BASE}/vao/areas`)
+        authFetch(`${BASE}/workers/village`),
+        authFetch(`${BASE}/vao/complaints/village`),
+        authFetch(`${BASE}/vao/areas`)
       ]);
 
       setCitizens(citList);
-      setWorkers(workList);
-      setComplaints(compList);
-      setAreas(areaList);
+      if (workRes.ok) setWorkers(extractArray(await workRes.json()));
+      if (compRes.ok) setComplaints(extractArray(await compRes.json()));
+      if (areaRes.ok) setAreas(extractArray(await areaRes.json()));
 
       setLastSynced(new Date());
     } catch (err) {
