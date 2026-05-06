@@ -74,16 +74,16 @@ async function authFetch(url, options = {}) {
   return res;
 }
 
-async function fetchAllPages(urlBase, pageSize = 5) {
-  const all = []; let page = 0; const SAFETY = 500;
+async function fetchAllPages(urlBase) {
+  const all = []; let page = 0; const SAFETY = 100;
   while (page < SAFETY) {
-    const res = await authFetch(`${urlBase}?page=${page}`);
+    const res = await authFetch(`${urlBase}${urlBase.includes("?") ? "&" : "?"}page=${page}`);
     if (!res.ok) break;
-    const raw = await res.json().catch(() => []);
-    const list = Array.isArray(raw) ? raw : (raw?.content ?? raw?.data ?? []);
+    const raw = await res.json().catch(() => ({}));
+    const list = Array.isArray(raw) ? raw : (raw?.content ?? raw?.data ?? raw?.citizens ?? raw?.workers ?? raw?.complaints ?? raw?.areas ?? []);
     if (!list.length) break;
     all.push(...list);
-    if (list.length < pageSize) break;
+    if (raw?.last === true) break;
     page++;
   }
   return all;
@@ -189,21 +189,25 @@ export default function VaoDashboard() {
     setIsSyncing(true);
     
     try {
-      const [profRes, dashRes, citRes, workRes, compRes, areaRes] = await Promise.all([
+      const [profRes, dashRes] = await Promise.all([
         authFetch(`${BASE}/vao/profile`),
-        authFetch(`${BASE}/vao/dashboard`),
-        authFetch(`${BASE}/vao/citizens/all`),
-        authFetch(`${BASE}/workers/village`),
-        authFetch(`${BASE}/vao/complaints/village`),
-        authFetch(`${BASE}/vao/areas`)
+        authFetch(`${BASE}/vao/dashboard`)
       ]);
 
       if (profRes.ok) setProfile(await profRes.json());
       if (dashRes.ok) setDash(await dashRes.json());
-      if (citRes.ok) setCitizens(extractArray(await citRes.json()));
-      if (workRes.ok) setWorkers(extractArray(await workRes.json()));
-      if (compRes.ok) setComplaints(extractArray(await compRes.json()));
-      if (areaRes.ok) setAreas(extractArray(await areaRes.json()));
+
+      const [citList, workList, compList, areaList] = await Promise.all([
+        fetchAllPages(`${BASE}/vao/citizens/all`),
+        fetchAllPages(`${BASE}/workers/village`),
+        fetchAllPages(`${BASE}/vao/complaints/village`),
+        fetchAllPages(`${BASE}/vao/areas`)
+      ]);
+
+      setCitizens(citList);
+      setWorkers(workList);
+      setComplaints(compList);
+      setAreas(areaList);
 
       setLastSynced(new Date());
     } catch (err) {
