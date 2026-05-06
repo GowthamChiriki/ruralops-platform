@@ -189,30 +189,48 @@ export default function VaoDashboard() {
     setIsSyncing(true);
     
     try {
-      const [profRes, dashRes] = await Promise.all([
-        authFetch(`${BASE}/vao/profile`),
-        authFetch(`${BASE}/vao/dashboard`)
-      ]);
+      const safeBase = BASE.endsWith("/") ? BASE.slice(0, -1) : BASE;
 
-      if (profRes.ok) setProfile(await profRes.json());
-      if (dashRes.ok) setDash(await dashRes.json());
+      // 1. Critical Base Data (Profile)
+      try {
+        const profRes = await authFetch(`${safeBase}/vao/profile`);
+        if (profRes.ok) setProfile(await profRes.json());
+      } catch (e) { console.error("VAO Sync - Profile error", e); }
 
+      // 2. Statistics & Overview
+      try {
+        const dashRes = await authFetch(`${safeBase}/vao/dashboard`);
+        if (dashRes.ok) setDash(await dashRes.json());
+      } catch (e) { console.error("VAO Sync - Stats error", e); }
+
+      // 3. Entity Collections (Citizens, Workers, Complaints, Areas)
       const [citList, workRes, compRes, areaRes] = await Promise.all([
-        fetchAllPages(`${BASE}/vao/citizens/all`),
-        authFetch(`${BASE}/workers/village`),
-        authFetch(`${BASE}/vao/complaints/village`),
-        authFetch(`${BASE}/vao/areas`)
-      ]);
+        fetchAllPages(`${safeBase}/vao/citizens/all`),
+        authFetch(`${safeBase}/workers/village`),
+        authFetch(`${safeBase}/vao/complaints/village`),
+        authFetch(`${safeBase}/vao/areas`)
+      ]).catch(err => {
+        console.error("VAO Sync - Collection Promise.all failed", err);
+        return [[], { ok: false }, { ok: false }, { ok: false }];
+      });
 
-      setCitizens(citList);
-      if (workRes.ok) setWorkers(extractArray(await workRes.json()));
-      if (compRes.ok) setComplaints(extractArray(await compRes.json()));
-      if (areaRes.ok) setAreas(extractArray(await areaRes.json()));
+      setCitizens(Array.isArray(citList) ? citList : []);
+      
+      if (workRes?.ok) {
+        try { setWorkers(extractArray(await workRes.json())); } catch (e) {}
+      }
+      if (compRes?.ok) {
+        try { setComplaints(extractArray(await compRes.json())); } catch (e) {}
+      }
+      if (areaRes?.ok) {
+        try { setAreas(extractArray(await areaRes.json())); } catch (e) {}
+      }
 
       setLastSynced(new Date());
+      setError(null);
     } catch (err) {
-      console.error("Load Error:", err);
-      setError(err.message);
+      console.error("Critical Load Error:", err);
+      setError("Synchronization failed. Please check your network connection.");
     } finally {
       setLoading(false);
       setIsSyncing(false);
@@ -342,6 +360,17 @@ export default function VaoDashboard() {
               </div>
             </header>
 
+            {error && (
+              <div className="bento-card" style={{ gridColumn: "span 12", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", padding: "20px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "16px" }}>
+                <div style={{ background: "#ef4444", color: "white", padding: "8px", borderRadius: "8px" }}><AlertTriangle size={24} /></div>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ margin: 0, color: "#ef4444", fontWeight: "800" }}>Synchronization Failure</h4>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "14px", opacity: 0.8 }}>{error}</p>
+                </div>
+                <button className="nb-btn-secondary" onClick={() => loadData(true)}>Try Again</button>
+              </div>
+            )}
+
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
@@ -445,11 +474,11 @@ function OverviewTab({ profile, dash, complianceScore, citizens, workers, compla
       {/* KPI Cards */}
       <div className="bento-card bento-kpi">
         <div className="kpi-icon" style={{ background: "rgba(59, 130, 246, 0.1)", color: "#3b82f6" }}><Users /></div>
-        <div className="kpi-val"><Counter to={dash?.totalCitizens || citizens.length} /></div>
+        <div className="kpi-val"><Counter to={Math.max(dash?.totalCitizens || 0, citizens.length)} /></div>
         <div className="kpi-label">Registered Citizens</div>
         <div style={{ marginTop: "12px", fontSize: "12px", color: "var(--primary)", fontWeight: "700" }}>
           <button className="nb-btn-secondary" style={{ padding: "4px 8px", width: "100%" }} onClick={() => navigate(`/vao/${vaoId}/citizens/approvals`)}>
-            Review {citizens.filter(c => normalizeStatus(c.status) === "PENDING").length} Pending
+            Review {Math.max(dash?.pendingCitizens || 0, citizens.filter(c => normalizeStatus(c.status) === "PENDING").length)} Pending
           </button>
         </div>
       </div>
