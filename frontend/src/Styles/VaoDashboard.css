@@ -246,6 +246,7 @@
 ================================================================ */
 .vd-page {
   min-height: 100vh;
+  padding-top: 100px;
   /* Layered graphite + teal radials — static, never animated */
   background:
     radial-gradient(ellipse 900px 700px at 75% 8%, rgba(35, 110, 128, .10) 0%, transparent 60%),

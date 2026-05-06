@@ -89,6 +89,7 @@
 ================================================================ */
 .vuc-page {
   min-height: 100vh;
+  padding-top: 100px;
   background: var(--bg);
   font-family: var(--fb);
   color: var(--t1);

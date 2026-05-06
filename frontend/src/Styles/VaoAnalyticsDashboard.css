@@ -62,7 +62,7 @@
    PAGE SHELL
 ================================================================ */
 .vaa-page {
-  min-height: 100vh; background: var(--bg);
+  min-height: 100vh; padding-top: 100px; background: var(--bg);
   position: relative; overflow-x: hidden;
   font-family: var(--fb); color: var(--t1);
 }
