@@ -37,19 +37,19 @@ export default function VaoProfileModal({ open, onClose, profile, vaoId, onUpdat
 
   if (!open) return null;
 
-  const p        = profile ?? {};
-  const name     = p.fullName     || "—";
-  const village  = p.villageName  || "—";
-  const dob      = fmtDate(p.dateOfBirth);
-  const gender   = p.gender       || "—";
-  const qual     = p.qualification || "—";
-  const phone    = p.alternatePhone ? `+91 ${p.alternatePhone}` : "—";
-  const address  = p.officeAddress || "—";
+  const p = profile ?? {};
+  const name = p.fullName || "—";
+  const village = p.villageName || "—";
+  const dob = fmtDate(p.dateOfBirth);
+  const gender = p.gender || "—";
+  const qual = p.qualification || "—";
+  const phone = p.alternatePhone ? `+91 ${p.alternatePhone}` : "—";
+  const address = p.officeAddress || "—";
   const complete = p.profileCompleted === true;
 
   const photoUrl = p.profilePhotoUrl && !p.profilePhotoUrl.startsWith("blob:")
     ? p.profilePhotoUrl : null;
-  const sigUrl   = p.signaturePhotoUrl && !p.signaturePhotoUrl.startsWith("blob:")
+  const sigUrl = p.signaturePhotoUrl && !p.signaturePhotoUrl.startsWith("blob:")
     ? p.signaturePhotoUrl : null;
 
   const initials = name
