@@ -599,6 +599,13 @@ export default function VaoProfileCompletion() {
      Update:   PUT  /vao/profile           → @PutMapping
   */
   const submitProfile = async () => {
+    const e = validate(5);
+    if (Object.keys(e).length) {
+      setErrors(e);
+      setToast({ msg: e.oathAccepted || "Please fix validation errors.", type: "error" });
+      return;
+    }
+
     const blobFields = ["profilePhotoUrl", "signaturePhotoUrl", "idProofUrl"]
       .filter(f => form[f]?.startsWith("blob:"));
     if (blobFields.length) {
@@ -912,8 +919,6 @@ export default function VaoProfileCompletion() {
                     <ReviewRow icon="🪪"  label="ID Proof"      value={form.idProofUrl ? "Uploaded ✓" : ""} thumbSrc={form.idProofUrl && !form.idProofUrl.startsWith("blob:") ? form.idProofUrl : null} onEdit={() => goStep(3)} />
                   </div>
                 </div>
-
-                </p>
               </div>
             )}
 
