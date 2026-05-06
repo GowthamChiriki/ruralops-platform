@@ -11,7 +11,8 @@ const STEPS = [
   { id: 1, icon: "👤", label: "Identity",  desc: "Personal details"  },
   { id: 2, icon: "📞", label: "Contact",   desc: "Office & phone"    },
   { id: 3, icon: "📸", label: "Documents", desc: "Photos & ID proof" },
-  { id: 4, icon: "✅", label: "Review",    desc: "Confirm & submit"  },
+  { id: 4, icon: "✅", label: "Review",    desc: "Verify details"    },
+  { id: 5, icon: "⚖️", label: "Oath",      desc: "Swear the oath"    },
 ];
 
 /* ════════════════════════════════════════════
@@ -462,6 +463,7 @@ export default function VaoProfileCompletion() {
     profilePhotoUrl:   "",
     signaturePhotoUrl: "",
     idProofUrl:        "",
+    oathAccepted:      false,
   });
 
   const handleAuthError = useCallback((err) => {
@@ -555,6 +557,9 @@ export default function VaoProfileCompletion() {
       if (form.signaturePhotoUrl?.startsWith("blob:"))
         e.signaturePhotoUrl = "Signature upload incomplete — please wait or retry";
     }
+    if (s === 5) {
+      if (!form.oathAccepted) e.oathAccepted = "You must swear the oath to proceed";
+    }
     return e;
   };
 
@@ -568,7 +573,7 @@ export default function VaoProfileCompletion() {
       return;
     }
     setAnimState({ key: animState.key + 1, dir: "fwd" });
-    setStep(s => Math.min(s + 1, 4));
+    setStep(s => Math.min(s + 1, 5));
     setErrors({});
   };
 
@@ -908,11 +913,73 @@ export default function VaoProfileCompletion() {
                   </div>
                 </div>
 
-                <p className="vp-legal" role="note">
-                  {isUpdate
-                    ? "By saving, you confirm all updated information is accurate and authentic."
-                    : "By submitting, you confirm all information is accurate and authentic. Providing false information is a punishable offence under applicable law."
-                  }
+                </p>
+              </div>
+            )}
+
+            {/* ════ STEP 5 — Oath ════ */}
+            {step === 5 && (
+              <div className="vp-body">
+                <div className="vp-body__head">
+                  <div className="vp-body__icon" aria-hidden="true">⚖️</div>
+                  <div>
+                    <h2 className="vp-body__title">The Sacred Oath of Office</h2>
+                    <p className="vp-body__sub">As a Village Administrative Officer, you hold a position of sacred trust.</p>
+                  </div>
+                </div>
+
+                <div className="vp-oath-card">
+                  <div className="vp-oath-card__bg" />
+                  <div className="vp-oath-card__header">
+                    <div className="vp-oath-card__crest">⚔️</div>
+                    <p className="vp-oath-card__entity">GOVERNMENT OF INDIA · RURAL DEVELOPMENT</p>
+                  </div>
+                  
+                  <div className="vp-oath-text">
+                    <p className="vp-oath-text__main">
+                      "I, <span className="vp-oath-name">{form.fullName || "[Officer Name]"}</span>, 
+                      having been appointed as the Village Administrative Officer for 
+                      <span className="vp-oath-village"> {localStorage.getItem("villageName") || "the assigned village"}</span>, 
+                      do solemnly swear that I will bear true faith and allegiance to the Constitution of India as by law established, 
+                      that I will uphold the sovereignty and integrity of India, 
+                      that I will faithfully and conscientiously discharge my duties without fear or favour, affection or ill-will 
+                      and that I will do right to all manner of people in accordance with the Constitution and the law."
+                    </p>
+                  </div>
+
+                  <div className="vp-oath-action">
+                    <label className={`vp-oath-check ${form.oathAccepted ? "is-checked" : ""}`}>
+                      <input 
+                        type="checkbox" 
+                        checked={form.oathAccepted} 
+                        onChange={(e) => {
+                          setForm(f => ({ ...f, oathAccepted: e.target.checked }));
+                          setErrors(er => ({ ...er, oathAccepted: "" }));
+                        }}
+                      />
+                      <span className="vp-oath-check__box">
+                        {form.oathAccepted && <span className="vp-oath-check__tick">✓</span>}
+                      </span>
+                      <span className="vp-oath-check__lbl">I solemnly swear and accept this oath of service.</span>
+                    </label>
+                    {errors.oathAccepted && <p className="vp-field__err">⚠ {errors.oathAccepted}</p>}
+                  </div>
+                  
+                  <div className="vp-oath-footer">
+                    <div className="vp-oath-sig">
+                      <p className="vp-oath-sig__lbl">Signed Electronically</p>
+                      {form.signaturePhotoUrl && !form.signaturePhotoUrl.startsWith("blob:") ? (
+                        <img src={form.signaturePhotoUrl} alt="Signature" className="vp-oath-sig__img" />
+                      ) : (
+                        <div className="vp-oath-sig__line" />
+                      )}
+                      <p className="vp-oath-sig__date">{new Date().toLocaleDateString("en-IN", { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="vp-legal">
+                  By checking the box above, you are electronically signing this oath. This action is legally binding and will be recorded in the official Rural Ops register.
                 </p>
               </div>
             )}
@@ -923,7 +990,7 @@ export default function VaoProfileCompletion() {
               </button>
               <div className="vp-foot__right">
                 <span className="vp-foot__counter">{step} / {STEPS.length}</span>
-                {step < 4 ? (
+                {step < 5 ? (
                   <button className="vp-btn vp-btn--primary" onClick={goNext} type="button">
                     Continue <span aria-hidden="true">→</span>
                   </button>

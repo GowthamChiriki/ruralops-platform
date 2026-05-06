@@ -9,7 +9,7 @@ import "../../Styles/VaoDashboard.css";
 /* ════════════════════════════════════════════
    BASE URL — single source of truth
 ════════════════════════════════════════════ */
-const BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+const BASE = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app";
 
 /* ════════════════════════════════════════════
    AUTH HELPERS — all read fresh, never stale
@@ -1179,20 +1179,47 @@ export default function VaoDashboard() {
       </div><Footer /></>
   );
 
-  if (!isComplete && !dash) return (
-    <><Navbar />
-      <div className="vd-page">
-        <div className="vd-ambient"><div className="vd-orb vd-orb-1" /><div className="vd-orb vd-orb-2" /><div className="vd-grid" /></div>
-        <div className={`vd-dash${visible ? " vd-dash--vis" : ""}`}>
-          <div className="vd-setup">
-            <div className="vd-setup__icon">⚙️</div>
-            <h2>Oath Not Yet Sworn</h2>
-            <p>Complete your VAO profile to activate the command hall.</p>
-            <button className="vd-btn vd-btn--primary vd-btn--lg" onClick={() => nav(`/vao/profile/${vaoId}`)}>Complete the Oath →</button>
+  if (!isComplete && !dash) {
+    const initials = vaoName ? vaoName.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase() : "?";
+    return (
+      <><Navbar />
+        <div className="vd-page">
+          <div className="vd-ambient"><div className="vd-orb vd-orb-1" /><div className="vd-orb vd-orb-2" /><div className="vd-grid" /></div>
+          <div className={`vd-dash${visible ? " vd-dash--vis" : ""}`}>
+            <div className="vd-ceremony">
+              <div className="vd-ceremony__hall">
+                <div className="vd-ceremony__crest">⚔️</div>
+                <div className="vd-ceremony__badge">VAO COMMISSION</div>
+                <h2 className="vd-ceremony__title">The Sacred Oath of Service</h2>
+                <p className="vd-ceremony__sub">Your command hall is currently sealed. To unlock the authority of the Village Administrative Officer, you must first complete your profile and swear the oath of service.</p>
+
+                {profile && (
+                  <div className="vd-ceremony__profile">
+                    <div className="vd-ceremony__av-wrap">
+                      <div className="vd-ceremony__av">
+                        {photo ? <img src={photo} alt={vaoName} className="vd-ceremony__img" /> : <span className="vd-ceremony__initials">{initials}</span>}
+                      </div>
+                    </div>
+                    <div className="vd-ceremony__info">
+                      <p className="vd-ceremony__name">{vaoName || "Candidate Officer"}</p>
+                      <p className="vd-ceremony__status">Profile Incomplete · Oath Pending</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="vd-ceremony__divider" />
+                
+                <button className="vd-btn vd-btn--primary vd-btn--lg vd-btn--ceremony" onClick={() => nav(`/vao/profile/${vaoId}`)}>
+                  Swear the Oath & Enter the Hall →
+                </button>
+                
+                <p className="vd-ceremony__legal">By entering, you accept all administrative responsibilities for {villageName || "the assigned village"}.</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </div><Footer /></>
-  );
+        </div><Footer /></>
+    );
+  }
 
   const TABS = [
     { k: "overview", l: "Overview", ic: "⬡" },
@@ -1269,8 +1296,8 @@ export default function VaoDashboard() {
                   <div className="vd-identity-sep" />
                   <div className="vd-identity-item"><span className="vd-identity-item__ic">🪪</span><span className="vd-identity-item__lbl">VAO ID</span><span className="vd-identity-item__val vd-identity-item__val--mono">{vaoId}</span></div>
                   <div className="vd-identity-sep" />
-                  <div className="vd-identity-item"><span className="vd-identity-item__ic">📅</span><span className="vd-identity-item__val">{today}</span></div>
-                  <div className="vd-identity-sep" />
+                  <div className="vd-identity-item vd-identity-item--date"><span className="vd-identity-item__ic">📅</span><span className="vd-identity-item__val">{today}</span></div>
+                  <div className="vd-identity-sep vd-identity-sep--date" />
                   <div className="vd-identity-item vd-identity-item--clock"><span className="vd-identity-item__ic">🕐</span><LiveClock />{refreshed && <span className="vd-identity-item__upd">· Synced {timeAgo(refreshed)}</span>}</div>
                 </div>
                 <div className="vd-header__chips">

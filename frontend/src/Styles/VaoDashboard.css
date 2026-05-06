@@ -791,12 +791,12 @@
     inset 0 -1px 0 rgba(0, 0, 0, .35);
 }
 
-/* Hide the date item (📅) and clock item (🕐) from the identity bar */
+/* Unhiding date & time items in the identity bar for better situational awareness */
 .vd-identity-item--date,
 .vd-identity-item--clock,
 .vd-identity-sep--date,
 .vd-identity-sep--clock {
-  display: none !important;
+  display: flex !important;
 }
 
 .vd-identity-item {
@@ -4245,32 +4245,178 @@
   margin-top: 9px;
 }
 
-.vd-setup {
-  max-width: 420px;
-  margin: 80px auto;
-  text-align: center;
+/* ── CEREMONY HALL (Oath Screen) ── */
+.vd-ceremony {
+  min-height: calc(100vh - 200px);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  padding: 40px 20px;
 }
 
-.vd-setup__icon {
-  font-size: 44px;
+.vd-ceremony__hall {
+  max-width: 580px;
+  width: 100%;
+  background: linear-gradient(155deg, var(--surface2) 0%, var(--surface) 60%, #111520 100%);
+  border: 1px solid rgba(184, 146, 46, 0.22);
+  border-radius: var(--r-2xl);
+  padding: 50px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, .02),
+    0 20px 60px rgba(0, 0, 0, .85),
+    inset 0 1px 0 rgba(184, 146, 46, 0.15);
+  animation: modalIn 0.8s var(--ease-out) both;
 }
 
-.vd-setup h2 {
+.vd-ceremony__hall::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% -20%, rgba(184, 146, 46, 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.vd-ceremony__crest {
+  font-size: 56px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 12px rgba(184, 146, 46, 0.4));
+  animation: numPop 1s var(--ease-bounce) both;
+}
+
+.vd-ceremony__badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(184, 146, 46, 0.12);
+  border: 1px solid rgba(184, 146, 46, 0.3);
+  color: var(--gold);
+  border-radius: 100px;
+  font-family: var(--fh);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  margin-bottom: 18px;
+  text-transform: uppercase;
+}
+
+.vd-ceremony__title {
   font-family: var(--fd);
-  font-size: 21px;
+  font-size: 32px;
   font-weight: 900;
   color: var(--t1);
+  margin-bottom: 16px;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #fff 0%, #b8922e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.vd-setup p {
+.vd-ceremony__sub {
   font-family: var(--fb);
-  font-size: 15px;
-  color: var(--t3);
-  line-height: 1.7;
+  font-size: 16px;
+  color: var(--t2);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.vd-ceremony__profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--vd-border);
+  border-radius: var(--r-lg);
+  padding: 12px 20px;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.vd-ceremony__av-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.vd-ceremony__av {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--surface3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.vd-ceremony__initials {
+  font-family: var(--fh);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--gold);
+}
+
+.vd-ceremony__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vd-ceremony__info {
+  flex: 1;
+}
+
+.vd-ceremony__name {
+  font-family: var(--fh);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--t1);
+  margin-bottom: 2px;
+}
+
+.vd-ceremony__status {
+  font-family: var(--fb);
+  font-size: 12px;
+  color: var(--amber);
+  font-style: italic;
+}
+
+.vd-ceremony__divider {
+  width: 100px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 0 auto 32px;
+  opacity: 0.4;
+}
+
+.vd-btn--ceremony {
+  font-family: var(--fh);
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  padding: 16px 32px !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--gold), var(--gold-d)) !important;
+  border: none !important;
+  color: #000 !important;
+  box-shadow: 0 10px 30px rgba(184, 146, 46, 0.3) !important;
+}
+
+.vd-btn--ceremony:hover {
+  transform: translateY(-3px) scale(1.02) !important;
+  box-shadow: 0 15px 40px rgba(184, 146, 46, 0.4) !important;
+}
+
+.vd-ceremony__legal {
+  font-family: var(--fb);
+  font-size: 11px;
+  color: var(--t4);
+  margin-top: 24px;
+  font-style: italic;
 }
 
 /* ── PAGINATION ── */
