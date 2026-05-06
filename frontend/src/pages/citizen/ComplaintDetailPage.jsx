@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import "../../Styles/ComplaintDetail.css";
+import { normalizeImageUrl } from "../../services/ImageService";
 
 /* Fix — centralised API base URL */
 const API = "https://ruralops-platform-production.up.railway.app";
@@ -438,9 +439,9 @@ export default function ComplaintDetailPage() {
                   <div className="cdp-gallery">
                     {complaint.beforeImageUrl ? (
                       <div className="cdp-photo"
-                        onClick={() => setModal({ src:complaint.beforeImageUrl, label:"Before — Issue Evidence" })}>
+                        onClick={() => setModal({ src: normalizeImageUrl(complaint.beforeImageUrl), label: "Before — Issue Evidence" })}>
                         <span className="cdp-photo__badge cdp-photo__badge--before">Before</span>
-                        <img src={complaint.beforeImageUrl} alt="Before" className="cdp-photo__img"/>
+                        <img src={normalizeImageUrl(complaint.beforeImageUrl)} alt="Before" className="cdp-photo__img"/>
                         <div className="cdp-photo__hover">🔍 Full Resolution</div>
                       </div>
                     ) : (
@@ -450,9 +451,9 @@ export default function ComplaintDetailPage() {
                     )}
                     {complaint.afterImageUrl ? (
                       <div className="cdp-photo"
-                        onClick={() => setModal({ src:complaint.afterImageUrl, label:"After — Resolution Confirmed" })}>
+                        onClick={() => setModal({ src: normalizeImageUrl(complaint.afterImageUrl), label: "After — Resolution Confirmed" })}>
                         <span className="cdp-photo__badge cdp-photo__badge--after">After</span>
-                        <img src={complaint.afterImageUrl} alt="After" className="cdp-photo__img"/>
+                        <img src={normalizeImageUrl(complaint.afterImageUrl)} alt="After" className="cdp-photo__img"/>
                         <div className="cdp-photo__hover">🔍 Full Resolution</div>
                       </div>
                     ) : (

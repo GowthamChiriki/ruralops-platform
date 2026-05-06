@@ -5,6 +5,7 @@ import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 
 import "../../../Styles/VaoComplaintDetails.css";
+import { normalizeImageUrl } from "../../../services/ImageService";
 
 /* ════════════════════════════════════════════
    BASE URL — single source of truth
@@ -170,14 +171,7 @@ function timeAgo(d) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-function normalizeImageUrl(url) {
-  if (!url || typeof url !== "string") return null;
-  const t = url.trim();
-  if (!t || t.startsWith("blob:")) return null;
-  if (t.startsWith("http://") || t.startsWith("https://")) return t;
-  if (t.startsWith("/")) return `${BASE}${t}`;
-  return `${BASE}/${t}`;
-}
+// Removed local normalizeImageUrl — now using imported version from ImageService.
 
 /* ════════════════════════════════════════════
    SUB-COMPONENTS

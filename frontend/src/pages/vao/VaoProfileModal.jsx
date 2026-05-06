@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import "./VaoProfileModal.css";
+import { normalizeImageUrl } from "../../services/ImageService";
 
 /* ─────────────────────────────────────────────
    VAO PROFILE MODAL
@@ -47,10 +48,8 @@ export default function VaoProfileModal({ open, onClose, profile, vaoId, onUpdat
   const address = p.officeAddress || "—";
   const complete = p.profileCompleted === true;
 
-  const photoUrl = p.profilePhotoUrl && !p.profilePhotoUrl.startsWith("blob:")
-    ? p.profilePhotoUrl : null;
-  const sigUrl = p.signaturePhotoUrl && !p.signaturePhotoUrl.startsWith("blob:")
-    ? p.signaturePhotoUrl : null;
+  const photoUrl = normalizeImageUrl(p.profilePhotoUrl);
+  const sigUrl   = normalizeImageUrl(p.signaturePhotoUrl);
 
   const initials = name
     .split(" ")

@@ -4,6 +4,7 @@ import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import "../../../Styles/VaoDashboard.css";
 import "../../../Styles/VaoAnalyticsDashboard.css";
+import { normalizeImageUrl } from "../../../services/ImageService";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app";
 
@@ -106,14 +107,7 @@ function timeAgo(d) {
   if (s < 60) return "Just now"; if (s < 3600) return `${Math.floor(s/60)}m ago`;
   if (s < 86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`;
 }
-function normalizeImageUrl(url) {
-  if (!url || typeof url !== "string") return null;
-  const t = url.trim();
-  if (!t || t.startsWith("blob:")) return null;
-  if (t.startsWith("http://") || t.startsWith("https://")) return t;
-  if (t.startsWith("/")) return `${BASE}${t}`;
-  return `${BASE}/${t}`;
-}
+// Removed local normalizeImageUrl — now using imported version from ImageService.
 
 function Counter({ to, duration = 700 }) {
   const [n, setN] = useState(0);

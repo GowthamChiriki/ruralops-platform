@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import "../../Styles/VaoProfile.css";
+import { normalizeImageUrl } from "../../services/ImageService";
 
 /* ─────────────────────────────────────────────
    STEPS
@@ -142,9 +143,7 @@ function PhotoUploader({
   const [uploadErrMsg, setUploadErrMsg] = useState("");
   const inputRef = useRef(null);
 
-  const displaySrc = previewSrc || (
-    value && !value.startsWith("blob:") ? value : null
-  );
+  const displaySrc = previewSrc || normalizeImageUrl(value);
 
   const handleFile = useCallback(async (file) => {
     if (!file) return;
@@ -302,7 +301,7 @@ function ReviewRow({ icon, label, value, onEdit, thumbSrc }) {
       <div className="vp-review-row__body">
         <span className="vp-review-row__lbl">{label}</span>
         {thumbSrc ? (
-          <img src={thumbSrc} alt={`${label} preview`} className="vp-review-row__thumb"
+          <img src={normalizeImageUrl(thumbSrc)} alt={`${label} preview`} className="vp-review-row__thumb"
             onError={(e) => { e.currentTarget.style.display = "none"; }} />
         ) : (
           <span className={`vp-review-row__val${!value ? " vp-review-row__val--empty" : ""}`}>
@@ -494,9 +493,9 @@ export default function VaoProfileCompletion() {
             qualification:     pd.qualification     ?? "",
             alternatePhone:    pd.alternatePhone    ?? "",
             officeAddress:     pd.officeAddress     ?? "",
-            profilePhotoUrl:   isRealUrl(pd.profilePhotoUrl)   ? pd.profilePhotoUrl   : "",
-            signaturePhotoUrl: isRealUrl(pd.signaturePhotoUrl) ? pd.signaturePhotoUrl : "",
-            idProofUrl:        isRealUrl(pd.idProofUrl)        ? pd.idProofUrl        : "",
+            profilePhotoUrl:   pd.profilePhotoUrl   ?? "",
+            signaturePhotoUrl: pd.signaturePhotoUrl ?? "",
+            idProofUrl:        pd.idProofUrl        ?? "",
           });
         }
       } catch (e) {
@@ -1020,12 +1019,4 @@ export default function VaoProfileCompletion() {
       <Footer />
     </>
   );
-}
-
-function isRealUrl(url) {
-  if (!url || typeof url !== "string") return false;
-  const t = url.trim();
-  if (!t) return false;
-  if (t.startsWith("blob:")) return false;
-  return t.startsWith("http://") || t.startsWith("https://") || t.startsWith("/");
 }

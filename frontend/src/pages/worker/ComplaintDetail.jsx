@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom"
 import Navbar from "../../components/Navbar"
 import Footer from "../../components/Footer"
 import "../../Styles/WorkerComplaintDetail.css"
+import { normalizeImageUrl } from "../../services/ImageService"
 
 const API = import.meta.env.VITE_API_BASE_URL ?? "https://ruralops-platform-production.up.railway.app"
 
@@ -611,13 +612,13 @@ export default function ComplaintDetailPage() {
                     {c.beforeImageUrl && (
                       <div className="cdp-imgs__slot">
                         <p className="cdp-imgs__lbl">Before</p>
-                        <img src={c.beforeImageUrl} alt="Before" className="cdp-imgs__img" />
+                        <img src={normalizeImageUrl(c.beforeImageUrl)} alt="Before" className="cdp-imgs__img" />
                       </div>
                     )}
                     {c.afterImageUrl && (
                       <div className="cdp-imgs__slot">
                         <p className="cdp-imgs__lbl" style={{ color: "#4aad7e" }}>After ✓</p>
-                        <img src={c.afterImageUrl} alt="After" className="cdp-imgs__img" />
+                        <img src={normalizeImageUrl(c.afterImageUrl)} alt="After" className="cdp-imgs__img" />
                       </div>
                     )}
                   </div>
