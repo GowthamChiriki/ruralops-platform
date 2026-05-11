@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
@@ -171,7 +171,7 @@ const VERIFIED_STATUSES = new Set(["VERIFIED"]);
 ════════════════════════════════════════════ */
 const PAGE_SIZE = 5;
 
-function Pagination({ total, page, onPage }) {
+const Pagination = React.memo(({ total, page, onPage }) => {
   const totalPages = Math.ceil(total / PAGE_SIZE);
   if (totalPages <= 1) return null;
   const pages = [];
@@ -192,7 +192,7 @@ function Pagination({ total, page, onPage }) {
       </span>
     </div>
   );
-}
+});
 
 /* ════════════════════════════════════════════
    CHART & UI SUB-COMPONENTS
@@ -374,7 +374,7 @@ const StatPanelCard = React.memo(({ title, icon, total, segments, color, onClick
   );
 });
 
-function VaoPhoto({ src, alt, className, fallback }) {
+const VaoPhoto = React.memo(({ src, alt, className, fallback }) => {
   return (
     <>
       <img key={src} src={src} alt={alt ?? ""} className={className}
@@ -383,7 +383,7 @@ function VaoPhoto({ src, alt, className, fallback }) {
       {fallback && <span style={{ display: "none" }}>{fallback}</span>}
     </>
   );
-}
+});
 
 function Pill({ status }) {
   const ns = normalizeStatus(status);
