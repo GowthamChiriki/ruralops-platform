@@ -499,8 +499,8 @@ export default function VaoProfileCompletion() {
         const pd = await res.json().catch(() => null);
         if (!pd) return;
 
-        if (pd.profileCompleted === true) {
-          setIsUpdate(true);
+        if (pd) {
+          setIsUpdate(pd.profileCompleted === true);
           setForm({
             fullName:          pd.fullName          ?? "",
             dateOfBirth:       pd.dateOfBirth       ?? "",
@@ -511,6 +511,7 @@ export default function VaoProfileCompletion() {
             profilePhotoUrl:   pd.profilePhotoUrl   ?? "",
             signaturePhotoUrl: pd.signaturePhotoUrl ?? "",
             idProofUrl:        pd.idProofUrl        ?? "",
+            oathAccepted:      pd.profileCompleted === true,
           });
         }
       } catch (e) {
