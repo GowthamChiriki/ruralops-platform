@@ -197,7 +197,7 @@ function Pagination({ total, page, onPage }) {
 /* ════════════════════════════════════════════
    CHART & UI SUB-COMPONENTS
 ════════════════════════════════════════════ */
-function Counter({ to = 0, ms = 900 }) {
+const Counter = React.memo(({ to = 0, ms = 900 }) => {
   const [n, setN] = useState(0);
   const raf = useRef(); const prev = useRef(0);
   useEffect(() => {
@@ -213,9 +213,9 @@ function Counter({ to = 0, ms = 900 }) {
     return () => cancelAnimationFrame(raf.current);
   }, [to, ms]);
   return <>{n}</>;
-}
+});
 
-function DonutChart({ segments, size = 120, thickness = 16, label, sublabel }) {
+const DonutChart = React.memo(({ segments, size = 120, thickness = 16, label, sublabel }) => {
   const total = segments.reduce((s, d) => s + d.value, 0) || 1;
   const R = size / 2 - thickness / 2, C = size / 2, circ = 2 * Math.PI * R;
   let cum = 0;
@@ -241,9 +241,9 @@ function DonutChart({ segments, size = 120, thickness = 16, label, sublabel }) {
       )}
     </div>
   );
-}
+});
 
-function BarChart({ data, barAreaH = 130 }) {
+const BarChart = React.memo(({ data, barAreaH = 130 }) => {
   if (!data || !data.length) return null;
   const max = Math.max(...data.map(d => d.value), 1);
   const VAL_H = 16, LBL_H = 52, TOTAL_H = barAreaH + LBL_H + VAL_H;
@@ -277,9 +277,9 @@ function BarChart({ data, barAreaH = 130 }) {
       </svg>
     </div>
   );
-}
+});
 
-function HBar({ label, value, max, color, showPct = true }) {
+const HBar = React.memo(({ label, value, max, color, showPct = true }) => {
   const pct = max ? Math.max((value / max) * 100, value > 0 ? 1 : 0) : 0;
   return (
     <div className="hbar">
@@ -293,9 +293,9 @@ function HBar({ label, value, max, color, showPct = true }) {
       <div className="hbar__track"><div className="hbar__fill" style={{ width: `${pct}%`, background: color }} /></div>
     </div>
   );
-}
+});
 
-function ComplianceRing({ score }) {
+const ComplianceRing = React.memo(({ score }) => {
   const R = 34, circ = 2 * Math.PI * R;
   const dash = (score / 100) * circ, offset = circ / 4;
   const color = score >= 80 ? "#3d9960" : score >= 50 ? "#d4881a" : "#b03a2e";
@@ -311,7 +311,7 @@ function ComplianceRing({ score }) {
       <text x="44" y="54" textAnchor="middle" fill="#6a5a38" fontSize="5.5" fontFamily="Cinzel,serif" letterSpacing="0.08">{label}</text>
     </svg>
   );
-}
+});
 
 function Sparkline({ data, color = "#c9a227", height = 28, width = 80 }) {
   if (!data || data.length < 2) return null;
@@ -325,7 +325,7 @@ function Sparkline({ data, color = "#c9a227", height = 28, width = 80 }) {
   );
 }
 
-function KpiCard({ icon, label, value, sub, color, delta, spark, onClick, delay = 0 }) {
+const KpiCard = React.memo(({ icon, label, value, sub, color, delta, spark, onClick, delay = 0 }) => {
   return (
     <div className="kpi-card" style={{ "--kc": color, animationDelay: `${delay}s` }}
       onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined}>
@@ -346,9 +346,9 @@ function KpiCard({ icon, label, value, sub, color, delta, spark, onClick, delay 
       )}
     </div>
   );
-}
+});
 
-function StatPanelCard({ title, icon, total, segments, color, onClick }) {
+const StatPanelCard = React.memo(({ title, icon, total, segments, color, onClick }) => {
   return (
     <div className="stat-panel" style={{ "--pc": color }} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined}>
       <div className="stat-panel__accent" />
@@ -372,7 +372,7 @@ function StatPanelCard({ title, icon, total, segments, color, onClick }) {
       </div>
     </div>
   );
-}
+});
 
 function VaoPhoto({ src, alt, className, fallback }) {
   return (
@@ -558,16 +558,16 @@ function AreaModal({ open, onClose, vaoId, onSuccess }) {
   );
 }
 
-function SectionHdr({ title, sub, action, actionLabel }) {
+const SectionHdr = React.memo(({ title, sub, action, actionLabel }) => {
   return (
     <div className="vd-sec-hdr">
       <div><h3 className="vd-sec-title">{title}</h3>{sub && <p className="vd-sec-sub">{sub}</p>}</div>
       {action && <button className="vd-sec-act" onClick={action}>{actionLabel}</button>}
     </div>
   );
-}
+});
 
-function CommandBanner({ vaoName, quote }) {
+const CommandBanner = React.memo(({ vaoName, quote }) => {
   const nameParts = (vaoName || "Officer").trim().split(" ");
   return (
     <div className="vd-command-banner">
@@ -586,9 +586,9 @@ function CommandBanner({ vaoName, quote }) {
       <div className="vd-command-banner__divider" />
     </div>
   );
-}
+});
 
-function IDCard({ name, id, village, photo, signature, active }) {
+const IDCard = React.memo(({ name, id, village, photo, signature, active }) => {
   const [flip, setFlip] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const ref = useRef();
@@ -667,15 +667,15 @@ function IDCard({ name, id, village, photo, signature, active }) {
       <p className="idc-hint">Click to flip · Hover to tilt</p>
     </div>
   );
-}
+});
 
-function LiveClock() {
+const LiveClock = React.memo(() => {
   const [time, setTime] = useState(fmt24Time());
   useEffect(() => { const t = setInterval(() => setTime(fmt24Time()), 1000); return () => clearInterval(t); }, []);
   return <span className="vd-live-clock">{time}</span>;
-}
+});
 
-function VerifiedReviewBanner({ count, onClick }) {
+const VerifiedReviewBanner = React.memo(({ count, onClick }) => {
   if (!count || count < 1) return null;
   return (
     <div className="vd-verified-banner" onClick={onClick} role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && onClick()}>
@@ -688,12 +688,12 @@ function VerifiedReviewBanner({ count, onClick }) {
       <div className="vd-verified-banner__cta">Review &amp; Close →</div>
     </div>
   );
-}
+});
 
 /* ════════════════════════════════════════════
    OVERVIEW ANALYTICS
 ════════════════════════════════════════════ */
-function OverviewAnalytics({ citizens, workers, complaints, areas, complianceData, onCitizens, onWorkers, onComplaints, goToApprovals, goToUnassigned, goToVerified }) {
+const OverviewAnalytics = React.memo(({ citizens, workers, complaints, areas, complianceData, onCitizens, onWorkers, onComplaints, goToApprovals, goToUnassigned, goToVerified }) => {
   const { total: cTotal, approved: cApp, pending: cPend, rejected: cRej } = citizens;
   const { total: wTotal, active: wAct, onLeave: wLeave, inactive: wInact, pendingAct: wPend } = workers;
   const { total: coTotal, unassigned: coUna, inProgress: coInPro, resolved: coRes, verified: coVerif } = complaints;
@@ -754,12 +754,12 @@ function OverviewAnalytics({ citizens, workers, complaints, areas, complianceDat
       )}
     </div>
   );
-}
+});
 
 /* ════════════════════════════════════════════
    ANALYTICS TAB
 ════════════════════════════════════════════ */
-function AnalyticsTab({ citizens, workers, complaints, areas, complianceData, goToComplaints, goToAnalytics }) {
+const AnalyticsTab = React.memo(({ citizens, workers, complaints, areas, complianceData, goToComplaints, goToAnalytics }) => {
   const { total: cTotal, approved: cApp, pending: cPend, rejected: cRej } = citizens;
   const { total: wTotal, active: wAct, onLeave: wLeave, inactive: wInact, pendingAct: wPend } = workers;
   const { total: coTotal, unassigned: coUna, inProgress: coInPro, resolved: coRes } = complaints;
@@ -937,7 +937,7 @@ function AnalyticsTab({ citizens, workers, complaints, areas, complianceData, go
       </div>
     </div>
   );
-}
+});
 
 /* ════════════════════════════════════════════
    MAIN DASHBOARD

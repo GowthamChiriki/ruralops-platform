@@ -91,6 +91,11 @@ const UPLOAD_ENDPOINTS = {
 };
 
 function parseUploadUrl(data) {
+  if (!data) return null;
+  // If data is just a string, it's the URL
+  if (typeof data === "string") return data;
+  
+  // Look for common field names in the response object
   const raw =
     data?.url               ||
     data?.fileUrl           ||
@@ -99,12 +104,22 @@ function parseUploadUrl(data) {
     data?.signaturePhotoUrl ||
     data?.idProofUrl        ||
     data?.path              ||
+    data?.filePath          ||
     null;
 
-  if (!raw || typeof raw !== "string") return null;
-  const t = raw.trim();
-  if (t.startsWith("blob:")) return null;
-  return t;
+  if (raw && typeof raw === "string") return raw.trim();
+
+  // Fail-safe: Look for any string value in the object that looks like a URL or path
+  if (typeof data === "object") {
+    const values = Object.values(data);
+    for (const v of values) {
+      if (typeof v === "string" && (v.startsWith("http") || v.includes("/files/") || v.includes("/uploads/"))) {
+        return v.trim();
+      }
+    }
+  }
+
+  return null;
 }
 
 /* ─────────────────────────────────────────────
@@ -251,7 +266,7 @@ function PhotoUploader({
             ) : (
               <>
                 <span className="vp-uploader__overlay-icon" aria-hidden="true">🔄</span>
-                <span className="vp-uploader__overlay-txt">Change</span>
+                <span className="vp-uploader__overlay-txt">Change Photo</span>
               </>
             )}
           </div>
@@ -564,6 +579,18 @@ export default function VaoProfileCompletion() {
 
   const goNext = () => {
     const e = validate(step);
+    
+    // Additional check: Don't allow Next if a file is still uploading
+    const isUploading = ["profilePhotoUrl", "signaturePhotoUrl", "idProofUrl"].some(f => {
+      const val = form[f];
+      return val && val.startsWith("blob:");
+    });
+
+    if (isUploading) {
+      setToast({ msg: "Please wait for your photos to finish uploading.", type: "error" });
+      return;
+    }
+
     if (Object.keys(e).length) {
       setErrors(e);
       const el = document.querySelector(".vp-field--error .vp-input, .vp-field--error .vp-uploader");

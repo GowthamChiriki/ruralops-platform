@@ -6,6 +6,18 @@
    · Date & time hidden from identity bar
    · Animations: transform + opacity ONLY (120fps safe)
 ================================================================ */
+
+/* ─────────────────────────────────────────────
+   PERFORMANCE HINTS (GPU Acceleration)
+───────────────────────────────────────────── */
+.vd-page, .vd-dash, .vd-panel, .idc-scene, .kpi-card, .stat-panel, .stat-panel-card, .vd-stat-card, .vd-action-card {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+.vd-orb { will-change: transform; pointer-events: none; }
+.vd-dash--vis { animation: vdFadeIn 0.65s cubic-bezier(0.2, 0, 0.2, 1) forwards; }
+@keyframes vdFadeIn { from { opacity: 0; transform: translateY(12px) translateZ(0); } to { opacity: 1; transform: translateY(0) translateZ(0); } }
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;800;900&family=Crimson+Pro:ital,opsz,wght@0,6..37,300;0,6..37,400;0,6..37,600;0,6..37,700;1,6..37,400&family=DM+Mono:wght@400;500&display=swap');
 
 /* ── DESIGN TOKENS ── */
